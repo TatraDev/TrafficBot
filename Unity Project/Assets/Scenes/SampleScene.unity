@@ -365,6 +365,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 846e7e6a996c3b140bb2c0997f78f0cf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  bonus: 0
+  time: 0
+  reset: 0
+  starting: 0
   timeText: {fileID: 1270332597}
   bonusText: {fileID: 2075107252}
   trainStatusText: {fileID: 998042241}
@@ -405,6 +409,7 @@ MonoBehaviour:
   text: none
   connectionIP: 127.0.0.1
   connectionPort: 25001
+  running: 0
 --- !u!1 &711009282
 GameObject:
   m_ObjectHideFlags: 0
@@ -599,9 +604,8 @@ MonoBehaviour:
   manager: {fileID: 0}
   trainPrefab: {fileID: 2836151267011186001, guid: 60c65c503fa7f094fae49757089310aa,
     type: 3}
-  pointPrefab: {fileID: 2885843883500214770, guid: 4f651eaa60fa1a44085ec4f8b7e4989c,
-    type: 3}
-  randomPointPosition: 0
+  capPrefab: {fileID: 0}
+  randomisePoints: 0
   from_1: {x: 0, y: 0}
   to_1: {x: 0, y: 0}
   from_2: {x: 0, y: 0}
@@ -986,9 +990,8 @@ MonoBehaviour:
   manager: {fileID: 0}
   trainPrefab: {fileID: 2836151267011186001, guid: 60c65c503fa7f094fae49757089310aa,
     type: 3}
-  pointPrefab: {fileID: 2885843883500214770, guid: 4f651eaa60fa1a44085ec4f8b7e4989c,
-    type: 3}
-  randomPointPosition: 0
+  capPrefab: {fileID: 0}
+  randomisePoints: 0
   from_1: {x: 0, y: 0}
   to_1: {x: 0, y: 0}
   from_2: {x: 0, y: 0}
@@ -1206,9 +1209,9 @@ MonoBehaviour:
   manager: {fileID: 668899051}
   trainPrefab: {fileID: 2836151267011186001, guid: 60c65c503fa7f094fae49757089310aa,
     type: 3}
-  pointPrefab: {fileID: 2885843883500214770, guid: 4f651eaa60fa1a44085ec4f8b7e4989c,
+  capPrefab: {fileID: 2885843883500214770, guid: 4f651eaa60fa1a44085ec4f8b7e4989c,
     type: 3}
-  randomPointPosition: 1
+  randomisePoints: 1
   from_1: {x: -3, y: -3}
   to_1: {x: 1, y: -1}
   from_2: {x: -3, y: 1}
@@ -1359,9 +1362,8 @@ MonoBehaviour:
   manager: {fileID: 0}
   trainPrefab: {fileID: 2836151267011186001, guid: 60c65c503fa7f094fae49757089310aa,
     type: 3}
-  pointPrefab: {fileID: 2885843883500214770, guid: 4f651eaa60fa1a44085ec4f8b7e4989c,
-    type: 3}
-  randomPointPosition: 0
+  capPrefab: {fileID: 0}
+  randomisePoints: 0
   from_1: {x: 0, y: 0}
   to_1: {x: 0, y: 0}
   from_2: {x: 0, y: 0}
@@ -1628,9 +1630,8 @@ MonoBehaviour:
   manager: {fileID: 0}
   trainPrefab: {fileID: 2836151267011186001, guid: 60c65c503fa7f094fae49757089310aa,
     type: 3}
-  pointPrefab: {fileID: 2885843883500214770, guid: 4f651eaa60fa1a44085ec4f8b7e4989c,
-    type: 3}
-  randomPointPosition: 0
+  capPrefab: {fileID: 0}
+  randomisePoints: 0
   from_1: {x: 0, y: 0}
   to_1: {x: 0, y: 0}
   from_2: {x: 0, y: 0}
@@ -1898,9 +1899,9 @@ MonoBehaviour:
   manager: {fileID: 668899051}
   trainPrefab: {fileID: 2836151267011186001, guid: 60c65c503fa7f094fae49757089310aa,
     type: 3}
-  pointPrefab: {fileID: 2885843883500214770, guid: 4f651eaa60fa1a44085ec4f8b7e4989c,
+  capPrefab: {fileID: 2885843883500214770, guid: 4f651eaa60fa1a44085ec4f8b7e4989c,
     type: 3}
-  randomPointPosition: 1
+  randomisePoints: 1
   from_1: {x: -5, y: 1}
   to_1: {x: -3, y: -1}
   from_2: {x: 0, y: 1}
@@ -2051,9 +2052,8 @@ MonoBehaviour:
   manager: {fileID: 0}
   trainPrefab: {fileID: 2836151267011186001, guid: 60c65c503fa7f094fae49757089310aa,
     type: 3}
-  pointPrefab: {fileID: 2885843883500214770, guid: 4f651eaa60fa1a44085ec4f8b7e4989c,
-    type: 3}
-  randomPointPosition: 0
+  capPrefab: {fileID: 0}
+  randomisePoints: 0
   from_1: {x: 0, y: 0}
   to_1: {x: 0, y: 0}
   from_2: {x: 0, y: 0}

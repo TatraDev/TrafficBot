@@ -10,69 +10,87 @@ using System.Globalization;
 
 public class NetworkCon : MonoBehaviour
 {
-    GameManager manager;
-    Thread mThread;
-
     public List<Train> trains;
-
-    float train_1_speed = 1;
 
     public string text = "none";
 
     public string connectionIP = "127.0.0.1";
     public int connectionPort = 25001;
 
-    TcpListener listener;
+    private GameManager manager;
+    private Thread mThread;
+    private TcpListener listener;
 
-    bool running;
-
-    bool resetScene = false;
-
-    public void Start()
-    {
-        manager = GetComponent<GameManager>();
-        ThreadStart ts = new ThreadStart(GetInfo);
-        mThread = new Thread(ts);
-        mThread.Start();
-    }
+    public bool running;
+    private float randSpeed;
 
     private void Update()
     {
-        trains[0].Speed = train_1_speed;
+        randSpeed = UnityEngine.Random.Range(1.5f, 2f);
     }
 
-    private void GetInfo()
+    public void Inst(GameManager manager)
     {
-        try
-        {
-            listener = new TcpListener(IPAddress.Parse(connectionIP), connectionPort);
-            listener.Start();
+        this.manager = manager;
 
-            manager.reset = true;
+        StartCoroutine(Listen());
 
-            running = true;
-            while (running)
-            {
-                Connection();
-            }
-            listener.Stop();
-        }
-        catch (Exception ex)
-        {
-            Debug.LogWarning(ex.Message);
-        }
+        trains[0].Speed = 0;
     }
 
-    private void Connection()
+    IEnumerator Listen()
     {
-        TcpClient client = listener.AcceptTcpClient();
+        listener = new TcpListener(IPAddress.Parse(connectionIP), connectionPort);
+        listener.Start();
 
-        NetworkStream nwStream = client.GetStream();
+        running = true;
+        while (running)
+        {
+            TcpClient client = listener.AcceptTcpClient();
+            NetworkStream nwStream = client.GetStream();
+
+            Receive(client, nwStream);
+
+            yield return new WaitForEndOfFrame();
+
+            Send(client, nwStream);
+
+            nwStream.Close();
+            client.Close();
+        }
+        listener.Stop();
+    }
+
+    void Receive(TcpClient client, NetworkStream nwStream)
+    {
+
         byte[] buffer = new byte[client.ReceiveBufferSize];
         int bytesRead = nwStream.Read(buffer, 0, client.ReceiveBufferSize);
 
         string dataReceived = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+        Debug.Log("Data received " + dataReceived);
 
+        if (dataReceived != null && dataReceived.Length > 0)
+        {
+            if (dataReceived == "start")
+            {
+                manager.starting = true;
+                manager.reset = true;
+            }
+
+            if(dataReceived == "stop")
+            {
+                running = false;
+            }
+
+            if (manager.starting == true)
+            {
+                StringToTrainsSpeed(dataReceived);
+            }
+        }
+    }
+    void Send(TcpClient client, NetworkStream nwStream)
+    {
         byte[] data = Encoding.UTF8.GetBytes(manager.Info());
         nwStream.Write(data, 0, data.Length);
 
@@ -82,30 +100,22 @@ public class NetworkCon : MonoBehaviour
             manager.time = 0;
             manager.reset = false;
         }
-
-        if (dataReceived != null && dataReceived.Length > 0)
-        {
-            if (dataReceived == "stop")
-            {
-                running = false;
-            }
-            else
-            {
-                train_1_speed = StringToFloat(dataReceived) * trains[0].MaxSpeed;
-                Debug.Log("speed in percent " + dataReceived);
-                Debug.Log("speed " + train_1_speed);
-            }
-        }
-
-        nwStream.Close();
-        client.Close();
     }
 
-    private float StringToFloat(string sFloat)
+    private void StringToTrainsSpeed(string sList)
     {
-        float result = 0;
-        float.TryParse(sFloat, NumberStyles.Any, CultureInfo.InvariantCulture, out result);
+        string[] sArray = sList.Split(',');
 
-        return result;
+        Debug.Log("Length received " + sArray.Length + "Length trains " + trains.Count);
+
+        for (int i = 0; i < sArray.Length; i++)
+        {
+            if (sArray[i] == "1")
+                trains[i].Speed += randSpeed;
+            else if (sArray[i] == "0")
+                trains[i].Speed -= randSpeed;
+
+            Debug.Log("train_" + i + " speed = " + trains[i].Speed);
+        }
     }
 }

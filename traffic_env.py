@@ -37,6 +37,7 @@ if __name__ == '__main__':
         foo = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(foo)
         net = foo.Net()
+        net.send("start")
         
         for game_num in range(10):
                 print('Game number: ', game_num)
@@ -48,3 +49,4 @@ if __name__ == '__main__':
                         print(action)
                         observation, reward, done, info = env.step(action)
                 print("Game over, reward = ", reward)
+        net.step("stop")

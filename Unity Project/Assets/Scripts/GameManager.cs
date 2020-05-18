@@ -16,6 +16,7 @@ public class GameManager : MonoBehaviour
     public int time;
 
     public bool reset = false;
+    public bool starting = false;
 
     public TMP_Text timeText;
     public TMP_Text bonusText;
@@ -25,7 +26,6 @@ public class GameManager : MonoBehaviour
 
     public List<LineRenderer> lines;
     public List<Line> lineScripts;
-
     public List<GameObject> trafficObjs;
 
     public Vector2[] intersections;
@@ -43,6 +43,7 @@ public class GameManager : MonoBehaviour
 
         network = GetComponent<NetworkCon>();
         network.trains = trains;
+        network.Inst(this);
     }
 
     void Update()
@@ -100,14 +101,22 @@ public class GameManager : MonoBehaviour
 
     public string Info()
     {
-        return Convert.ToString(trains[0].Speed / trains[0].MaxSpeed, CultureInfo.InvariantCulture) + "," + Convert.ToString(trains[1].Speed / trains[1].MaxSpeed, CultureInfo.InvariantCulture) + "," + bonus + "," + Convert.ToInt32(reset);
+        string sTrains = "";
+        foreach (Train train in trains)
+        {
+            sTrains += Convert.ToString((float)Math.Round(train.Speed / train.MaxSpeed, 4), CultureInfo.InvariantCulture) + ",";
+        }
+
+        return sTrains +
+            bonus + "," +
+            Convert.ToInt32(reset);
     }
 
     public string TrainInfo(Train train)
-    { 
-            return "Train" +
+    {
+        return "Train" +
             "\n   Distance: " +
-            math.round(train.PathDistance * 100) +
+            math.round(train.LineDistance * 100) +
             " m" +
             "\n   Position: " +
             train.GetDistanceToEnd() +
@@ -116,7 +125,7 @@ public class GameManager : MonoBehaviour
             train.Speed +
             " km/h" +
             "\n   Dist / speed * 60: " +
-            train.PathDistance / 10 / train.Speed * 60 +
+            train.LineDistance / 10 / train.Speed * 60 +
             " min" +
             "\n   Time end: " +
             train.TimeToEnd +
@@ -126,16 +135,17 @@ public class GameManager : MonoBehaviour
     public void ResetScene()
     {
         reset = true;
-        foreach (var obj in trains)
+        foreach (var train in trains)
         {
-            Destroy(obj.gameObject);
+            Destroy(train.gameObject);
         }
 
         trains.Clear();
 
         foreach (Line script in lineScripts)
         {
-            script.RandomPointPosition();      
+            script.InstTrain();
+            script.RandomisePointPosition();
         }
 
         foreach (var obj in trafficObjs)
@@ -153,12 +163,20 @@ public class GameManager : MonoBehaviour
 
     private void PlusBonus()
     {
-        bonus++;
+        if (starting)
+            bonus++;
+    }
+
+    public void PlusBonus(int count)
+    {
+        if (starting)
+            bonus += count;
     }
 
     private void PlusTime()
     {
-        time++;
+        if (starting)
+            time++;
     }
 
     public void SetTrainSpeed(int index, float speed)

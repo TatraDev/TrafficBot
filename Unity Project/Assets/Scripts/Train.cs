@@ -7,7 +7,6 @@ using System;
 
 public class Train : MonoBehaviour
 {
-    private Vector2 startPoint;
     private Vector2 endPoint;
     private Vector2 nextPoint;
 
@@ -15,106 +14,89 @@ public class Train : MonoBehaviour
 
     public LineRenderer line;
 
-    private float speed = 6f;
+    public float MaxSpeed { get; private set; } = 120;
+
+    private float speed = 5f;
     public float Speed
     {
         get { return speed; }
         set
         {
             if (value <= 0) speed = 0;
-            else if (value >= 120) speed = 120;
+            else if (value >= MaxSpeed) speed = MaxSpeed;
             else speed = value;
         }
     }
-    public float MaxSpeed
-    {
-        get { return 120; }
-    }
 
-    private List<Vector2> path;
-    private int pathPositionCount;
+    private List<Vector2> linePoints;
 
-    private float distance = 0;
-    public float PathDistance
-    {
-        get { return distance; }
-    }
-
-    private float trainPos = 0;
-    public float TrainPosition
-    {
-        get { return trainPos; }
-    }
+    public float LineDistance { get; private set; } = 0;
+    public float TrainPosition { get; private set; } = 0;
 
     private float startTime;
-
-    private float timeToEnd;
-    public float TimeToEnd
-    {
-        get { return timeToEnd; }
-    }
-
-    private Rigidbody2D rb;
+    public float TimeToEnd { get; private set; }
 
     private GameManager manager;
+    private Rigidbody2D rb;
 
-    void Start()
+    private void Start()
     {
-        rb = GetComponent<Rigidbody2D>();
         manager = GameObject.FindGameObjectWithTag("GameManager").GetComponent<GameManager>();
+        rb = GetComponent<Rigidbody2D>();
 
-        pathPositionCount = line.positionCount;
+        linePoints = new List<Vector2>();
 
-        path = new List<Vector2>();
-
-        for (int i = 0; i < pathPositionCount; i++)
+        for (int i = 0; i < line.positionCount; i++)
         {
             Vector3 point = line.GetPosition(i);
 
             if (i != 0)
             {
-                distance += (point - line.GetPosition(i - 1)).magnitude;
+                LineDistance += (point - line.GetPosition(i - 1)).magnitude;
             }
 
-            path.Add(point);
+            linePoints.Add(point);
         }
 
-        startPoint = path[0];
-        transform.position = startPoint;
+        transform.position = linePoints[0];
 
         nextPointIndex = 1;
-        nextPoint = path[nextPointIndex];
-        endPoint = path[pathPositionCount - 1];
+        nextPoint = linePoints[nextPointIndex];
+        endPoint = linePoints[line.positionCount - 1];
 
         startTime = Time.timeSinceLevelLoad;
     }
 
-    void FixedUpdate()
+    private void FixedUpdate()
     {
         SetTrainPosition();
         Movement();
+        Rotation();
     }
 
     private void Movement()
     {
         if (rb.position == endPoint)
         {
-            timeToEnd = Time.timeSinceLevelLoad - startTime;
+            TimeToEnd = Time.timeSinceLevelLoad - startTime;
             startTime = Time.timeSinceLevelLoad;
+            manager.PlusBonus(15);
             nextPointIndex = 0;
-            path.Reverse();
-            startPoint = path[0];
-            endPoint = path[pathPositionCount - 1];
+            linePoints.Reverse();
+            endPoint = linePoints[line.positionCount - 1];
         }
         else if (rb.position == nextPoint)
         {
             nextPointIndex++;
-            nextPoint = path[nextPointIndex];
+            nextPoint = linePoints[nextPointIndex];
         }
 
         Vector2 newPos = Vector2.MoveTowards(rb.position, nextPoint, speed / 6 * Time.fixedDeltaTime);
         rb.MovePosition(newPos);
+    }
 
+    private void Rotation()
+    {
         float angleZ = math.atan2(transform.position.y - nextPoint.y, transform.position.x - nextPoint.x);
         angleZ += 90 * math.PI / 180;
 
@@ -123,25 +105,24 @@ public class Train : MonoBehaviour
         transform.rotation = quaternion.Euler(rot);
     }
 
-    private void SetTrainPosition() 
+    private void SetTrainPosition()
     {
-        trainPos = 0;
+        TrainPosition = 0;
 
-        for (int i = nextPointIndex; i < path.Count; i++)
+        for (int i = nextPointIndex; i < linePoints.Count; i++)
         {
-            Vector3 point = path[i];
+            Vector3 point = linePoints[i];
 
             if (i != nextPointIndex)
             {
-                trainPos += (point - new Vector3(path[i - 1].x, path[i - 1].y, 1)).magnitude;
+                TrainPosition += (point - new Vector3(linePoints[i - 1].x, linePoints[i - 1].y, 1)).magnitude;
             }
             else if (i == nextPointIndex)
             {
-                trainPos += (transform.position - point).magnitude;
+                TrainPosition += (transform.position - point).magnitude;
             }
         }
     }
-
 
     private void OnTriggerEnter2D(Collider2D collider)
     {
@@ -150,11 +131,11 @@ public class Train : MonoBehaviour
 
     public float GetDistanceToEnd()
     {
-        return (float) Math.Round(PathDistance * 100 - TrainPosition * 100, 2);
+        return (float)Math.Round(LineDistance * 100 - TrainPosition * 100, 2);
     }
 
     public float GetPositionInPercent()
     {
-        return math.round((100 - (trainPos / distance * 100)));
+        return math.round((100 - (TrainPosition / LineDistance * 100)));
     }
 }

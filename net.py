@@ -7,7 +7,11 @@ class Net:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((host,port))
 
-        dataSend = str(action).strip('[]')
+        if (type(action) == list):
+            dataSend = str(action).strip('[]')
+        elif (type(action) == str):
+            dataSend = action
+            
         sock.sendall(dataSend.encode("utf-8"))
 
         dataReceive = sock.recv(1024)
@@ -15,9 +19,24 @@ class Net:
         stringData = dataReceive.decode("utf-8")
         stringDataList = stringData.split(',')
 
+        print(stringDataList)
         observation = [float(stringDataList[0]),float(stringDataList[1])]
         revard = int(stringDataList[2])
         done = bool(int(stringDataList[3]))
 
         sock.close()
+        #time.sleep(0.5)
+        
         return observation, revard, done
+
+    def send(self, sText):
+        host, port = "127.0.0.1", 25001
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((host,port))
+
+        if (type(sText) == str):
+            dataSend = sText
+            sock.sendall(dataSend.encode("utf-8"))
+            sock.close()
+        else:
+            print("Not a string")            

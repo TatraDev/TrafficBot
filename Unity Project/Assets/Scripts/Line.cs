@@ -8,13 +8,13 @@ public class Line : MonoBehaviour
     [SerializeField] private GameObject trainPrefab = default;
     private GameObject train;
 
-    [SerializeField] private GameObject pointPrefab = default;
+    [SerializeField] private GameObject capPrefab = default;
 
     private LineRenderer line;
 
     private Color color;
 
-    public bool randomPointPosition;
+    public bool randomisePoints;
 
     public Vector2 from_1;
     public Vector2 to_1;
@@ -26,35 +26,34 @@ public class Line : MonoBehaviour
         line = GetComponent<LineRenderer>();
         color = line.colorGradient.colorKeys[0].color;
 
-        RandomPointPosition();
+        InstTrain();
+        RandomisePointPosition();
         InstEndCaps();
     }
 
-    public void RandomPointPosition()
+    public void RandomisePointPosition()
     {
-        if (randomPointPosition)
+        if (randomisePoints)
         {
             line.SetPosition(1,new Vector2(Random.Range(from_1.x, to_1.x), Random.Range(from_1.y, to_1.y)));
             line.SetPosition(2, new Vector2(Random.Range(from_2.x, to_2.x), Random.Range(from_2.y, to_2.y)));
-            InstTrain();
-            manager.trains.Add(train.GetComponent<Train>());
         }
     }
 
-    void InstEndCaps()
+    private void InstEndCaps()
     {
-        GameObject start = Instantiate(pointPrefab);
+        GameObject start = Instantiate(capPrefab);
         start.transform.parent = transform;
         start.transform.position = line.GetPosition(0);
         start.GetComponent<SpriteRenderer>().color = color;
 
-        GameObject end = Instantiate(pointPrefab);
+        GameObject end = Instantiate(capPrefab);
         end.transform.parent = transform;
         end.transform.position = line.GetPosition(line.positionCount - 1);
         end.GetComponent<SpriteRenderer>().color = color;
     }
 
-    void InstTrain()
+    public void InstTrain()
     {
         Color color = this.color;
 
@@ -68,5 +67,7 @@ public class Line : MonoBehaviour
         color.b += 0.1f;
 
         train.GetComponent<SpriteRenderer>().color = color;
+
+        manager.trains.Add(train.GetComponent<Train>());
     }
 }
