@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
-using TMPro;
 using System;
 
 public class Train : MonoBehaviour
@@ -80,7 +79,7 @@ public class Train : MonoBehaviour
         {
             TimeToEnd = Time.timeSinceLevelLoad - startTime;
             startTime = Time.timeSinceLevelLoad;
-            manager.PlusBonus(15);
+            manager.AddBonus(5);
             nextPointIndex = 0;
             linePoints.Reverse();
             endPoint = linePoints[line.positionCount - 1];

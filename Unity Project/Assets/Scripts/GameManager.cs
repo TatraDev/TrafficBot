@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using LineSegmentsIntersection;
-using UnityEngine.SceneManagement;
 using Unity.Mathematics;
 using System;
 using System.Globalization;
+
 
 public class GameManager : MonoBehaviour
 {
@@ -20,7 +20,8 @@ public class GameManager : MonoBehaviour
 
     public TMP_Text timeText;
     public TMP_Text bonusText;
-    public TMP_Text trainStatusText;
+    public TMP_Text train_1StatusText;
+    public TMP_Text train_2StatusText;
 
     private GameObject[] lineObjs;
 
@@ -38,8 +39,8 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         InitLines();
-        InvokeRepeating("PlusBonus", 1, 1);
-        InvokeRepeating("PlusTime", 1, 1);
+        InvokeRepeating("AddOneBonus", 1, 1);
+        InvokeRepeating("AddOneTime", 1, 1);
 
         network = GetComponent<NetworkCon>();
         network.trains = trains;
@@ -50,8 +51,12 @@ public class GameManager : MonoBehaviour
     {
         timeText.text = "Time: " + time;
         bonusText.text = Convert.ToString(bonus);
-        trainStatusText.text = TrainInfo(trains[0]);
-        trainStatusText.color = trains[0].GetComponent<SpriteRenderer>().color;
+
+        train_1StatusText.text = TrainInfo(trains[0]);
+        train_1StatusText.color = trains[0].GetComponent<SpriteRenderer>().color;
+
+        train_2StatusText.text = TrainInfo(trains[1]);
+        train_2StatusText.color = trains[1].GetComponent<SpriteRenderer>().color;
 
         if (Input.GetKeyDown(KeyCode.R))
             ResetScene();
@@ -161,19 +166,19 @@ public class GameManager : MonoBehaviour
         network.trains = trains;
     }
 
-    private void PlusBonus()
-    {
-        if (starting)
-            bonus++;
-    }
-
-    public void PlusBonus(int count)
+    public void AddBonus(int count)
     {
         if (starting)
             bonus += count;
     }
 
-    private void PlusTime()
+    public void AddOneBonus()
+    {
+        if (starting)
+            bonus ++;
+    }
+
+    private void AddOneTime()
     {
         if (starting)
             time++;
@@ -182,5 +187,13 @@ public class GameManager : MonoBehaviour
     public void SetTrainSpeed(int index, float speed)
     {
         trains[index].GetComponent<Train>().Speed = speed;
+    }
+
+    public void EnableScript()
+    {
+        Debug.Log(Application.dataPath);
+        System.Diagnostics.Process proc = new System.Diagnostics.Process();
+        proc.StartInfo.FileName = Application.dataPath + "/TrafficBot/traffic_env.py";
+        proc.Start();
     }
 }

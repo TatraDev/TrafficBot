@@ -6,7 +6,6 @@ using System.Text;
 using UnityEngine;
 using System.Threading;
 using System.Collections;
-using System.Globalization;
 
 public class NetworkCon : MonoBehaviour
 {
@@ -21,10 +20,14 @@ public class NetworkCon : MonoBehaviour
     private Thread mThread;
     private TcpListener listener;
 
-    public bool running;
-    private float randSpeed;
+    TcpClient client;
+    NetworkStream nwStream;
 
-    private void Update()
+    public bool received;
+    private float randSpeed;
+    private bool stop;
+
+    private void FixedUpdate()
     {
         randSpeed = UnityEngine.Random.Range(1.5f, 2f);
     }
@@ -33,37 +36,63 @@ public class NetworkCon : MonoBehaviour
     {
         this.manager = manager;
 
-        StartCoroutine(Listen());
+        ThreadStart threadStart = new ThreadStart(ReceiveThreadWhile);
+        mThread = new Thread(threadStart);
+        mThread.Start();
+
+        StartCoroutine(SendRutineWhile());
 
         trains[0].Speed = 0;
     }
 
-    IEnumerator Listen()
+    public void Connect()
     {
         listener = new TcpListener(IPAddress.Parse(connectionIP), connectionPort);
         listener.Start();
+    }
 
-        running = true;
-        while (running)
+    private void ReceiveThreadWhile()
+    {
+        Connect();
+
+        received = false;
+
+        while (!stop)
         {
-            TcpClient client = listener.AcceptTcpClient();
-            NetworkStream nwStream = client.GetStream();
+            if (!received)
+            {
+                client = listener.AcceptTcpClient();
+                nwStream = client.GetStream();
 
-            Receive(client, nwStream);
+                Receive();
 
-            yield return new WaitForEndOfFrame();
-
-            Send(client, nwStream);
-
-            nwStream.Close();
-            client.Close();
+                received = true;
+            }
         }
         listener.Stop();
     }
 
-    void Receive(TcpClient client, NetworkStream nwStream)
+    private IEnumerator SendRutineWhile()
     {
+        while (!stop)
+        {
+            yield return null;
 
+            if (received)
+            {
+                Send();
+
+                nwStream.Close();
+                client.Close();
+            }
+
+            received = false;
+        }
+        listener.Stop();
+    }
+
+    private void Receive()
+    {
         byte[] buffer = new byte[client.ReceiveBufferSize];
         int bytesRead = nwStream.Read(buffer, 0, client.ReceiveBufferSize);
 
@@ -78,18 +107,13 @@ public class NetworkCon : MonoBehaviour
                 manager.reset = true;
             }
 
-            if(dataReceived == "stop")
-            {
-                running = false;
-            }
-
             if (manager.starting == true)
             {
                 StringToTrainsSpeed(dataReceived);
             }
         }
     }
-    void Send(TcpClient client, NetworkStream nwStream)
+    private void Send()
     {
         byte[] data = Encoding.UTF8.GetBytes(manager.Info());
         nwStream.Write(data, 0, data.Length);
@@ -116,6 +140,26 @@ public class NetworkCon : MonoBehaviour
                 trains[i].Speed -= randSpeed;
 
             Debug.Log("train_" + i + " speed = " + trains[i].Speed);
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (mThread != null)
+        {
+            stop = true;
+            listener.Stop();
+            mThread.Abort();
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (mThread != null)
+        {
+            stop = true;
+            listener.Stop();
+            mThread.Abort();
         }
     }
 }
