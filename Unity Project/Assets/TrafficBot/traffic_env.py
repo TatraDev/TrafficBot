@@ -15,8 +15,7 @@ class TrafficEnvironment:
                 # must reset game and environment variables and return initial observation
 
         def step(self, action: List[int]):
-                observation, reward, done = net.step(action)
-                info = {} # now is empty
+                observation, reward, done, info = net.step(action)
                 return observation, reward, done, info
 
 
@@ -44,4 +43,5 @@ if __name__ == '__main__':
                         action = bot.act(observation)
                         print(action)
                         observation, reward, done, info = env.step(action)
+                        print(info)
                 print("Game over, reward = ", reward)

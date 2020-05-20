@@ -11,8 +11,6 @@ public class Train : MonoBehaviour
 
     private int nextPointIndex;
 
-    public LineRenderer line;
-
     public float MaxSpeed { get; private set; } = 120;
 
     private float speed = 5f;
@@ -27,23 +25,25 @@ public class Train : MonoBehaviour
         }
     }
 
-    private List<Vector2> linePoints;
+    private List<Vector2> linePoints = new List<Vector2>();
 
-    public float LineDistance { get; private set; } = 0;
-    public float TrainPosition { get; private set; } = 0;
+    public float lineDistance { get; private set; } = 0;
+    public float trainPosition { get; private set; } = 0;
 
     private float startTime;
-    public float TimeToEnd { get; private set; }
+    public float timeToEnd { get; private set; }
 
+    private LineRenderer line;
     private GameManager manager;
     private Rigidbody2D rb;
 
+    private bool revers = false;
+
     private void Start()
     {
+        line = GetComponentInParent<LineRenderer>();
         manager = GameObject.FindGameObjectWithTag("GameManager").GetComponent<GameManager>();
         rb = GetComponent<Rigidbody2D>();
-
-        linePoints = new List<Vector2>();
 
         for (int i = 0; i < line.positionCount; i++)
         {
@@ -51,7 +51,7 @@ public class Train : MonoBehaviour
 
             if (i != 0)
             {
-                LineDistance += (point - line.GetPosition(i - 1)).magnitude;
+                lineDistance += (point - line.GetPosition(i - 1)).magnitude;
             }
 
             linePoints.Add(point);
@@ -77,16 +77,22 @@ public class Train : MonoBehaviour
     {
         if (rb.position == endPoint)
         {
-            TimeToEnd = Time.timeSinceLevelLoad - startTime;
+            timeToEnd = Time.timeSinceLevelLoad - startTime;
             startTime = Time.timeSinceLevelLoad;
-            manager.AddBonus(5);
+
+            revers = !revers;
+
+            speed = 0;
             nextPointIndex = 0;
             linePoints.Reverse();
             endPoint = linePoints[line.positionCount - 1];
+
+            manager.AddBonus(5);
         }
         else if (rb.position == nextPoint)
         {
             nextPointIndex++;
+
             nextPoint = linePoints[nextPointIndex];
         }
 
@@ -100,13 +106,12 @@ public class Train : MonoBehaviour
         angleZ += 90 * math.PI / 180;
 
         Vector3 rot = Vector3.forward * angleZ;
-
         transform.rotation = quaternion.Euler(rot);
     }
 
     private void SetTrainPosition()
     {
-        TrainPosition = 0;
+        trainPosition = 0;
 
         for (int i = nextPointIndex; i < linePoints.Count; i++)
         {
@@ -114,13 +119,18 @@ public class Train : MonoBehaviour
 
             if (i != nextPointIndex)
             {
-                TrainPosition += (point - new Vector3(linePoints[i - 1].x, linePoints[i - 1].y, 1)).magnitude;
+                trainPosition += (point - new Vector3(linePoints[i - 1].x, linePoints[i - 1].y, 1)).magnitude;
             }
             else if (i == nextPointIndex)
             {
-                TrainPosition += (transform.position - point).magnitude;
+                trainPosition += (transform.position - point).magnitude;
             }
         }
+
+        if (revers)
+            trainPosition = trainPosition;
+        else
+            trainPosition = lineDistance - trainPosition;
     }
 
     private void OnTriggerEnter2D(Collider2D collider)
@@ -130,11 +140,11 @@ public class Train : MonoBehaviour
 
     public float GetDistanceToEnd()
     {
-        return (float)Math.Round(LineDistance * 100 - TrainPosition * 100, 2);
+        return (float)Math.Round(trainPosition * 100, 2);
     }
 
     public float GetPositionInPercent()
     {
-        return math.round((100 - (TrainPosition / LineDistance * 100)));
+        return math.round((100 - (trainPosition / lineDistance * 100)));
     }
 }

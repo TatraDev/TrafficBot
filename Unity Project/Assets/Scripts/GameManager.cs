@@ -1,19 +1,17 @@
-﻿using System.Collections;
+﻿using System;
+using System.Globalization;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using LineSegmentsIntersection;
 using Unity.Mathematics;
-using System;
-using System.Globalization;
-
 
 public class GameManager : MonoBehaviour
 {
     public int bonus;
-
-    private int overTime = 100;
     public int time;
+    private int overTime = 100;
 
     public bool reset = false;
     public bool starting = false;
@@ -24,26 +22,24 @@ public class GameManager : MonoBehaviour
     public TMP_Text train_2StatusText;
 
     private GameObject[] lineObjs;
-
-    public List<LineRenderer> lines;
-    public List<Line> lineScripts;
-    public List<GameObject> trafficObjs;
-
-    public Vector2[] intersections;
-
-    public List<Train> trains;
+    private List<LineRenderer> lineRenderers = new List<LineRenderer>();
+    private List<Line> lineScripts = new List<Line>();
 
     public GameObject trafficLightPrefab;
+    private List<GameObject> trafficObjs = new List<GameObject>();
+    private List<TrafficLight> trafficLights = new List<TrafficLight>();
 
-    private NetworkCon network;
+    public List<Train> trains = new List<Train>();
+
+    private Network network;
     void Start()
     {
-        InitLines();
         InvokeRepeating("AddOneBonus", 1, 1);
-        InvokeRepeating("AddOneTime", 1, 1);
+        InvokeRepeating("AddOneSecond", 1, 1);
 
-        network = GetComponent<NetworkCon>();
-        network.trains = trains;
+        network = GetComponent<Network>();
+
+        InitLines();
         network.Inst(this);
     }
 
@@ -63,6 +59,8 @@ public class GameManager : MonoBehaviour
 
         if (overTime <= time)
             ResetScene();
+
+        trains[1].Speed = 5;
     }
 
     void InitLines()
@@ -71,7 +69,7 @@ public class GameManager : MonoBehaviour
 
         foreach (GameObject line in lineObjs)
         {
-            lines.Add(line.GetComponent<LineRenderer>());
+            lineRenderers.Add(line.GetComponent<LineRenderer>());
             lineScripts.Add(line.GetComponent<Line>());
         }
 
@@ -80,22 +78,27 @@ public class GameManager : MonoBehaviour
 
     void InstTrafficLight()
     {
-        for (int i = 0; i < lines.Count; i++)
+        for (int i = 0; i < lineRenderers.Count; i++)
         {
-            for (int j = i + 1; j < lines.Count; j++)
+            for (int j = i + 1; j < lineRenderers.Count; j++)
             {
-                for (int x = 1; x < lines[i].positionCount; x++)
+                for (int x = 1; x < lineRenderers[i].positionCount; x++)
                 {
-                    for (int y = 1; y < lines[j].positionCount; y++)
+                    for (int y = 1; y < lineRenderers[j].positionCount; y++)
                     {
-                        if (Math2d.LineSegmentsIntersection(lines[i].GetPosition(x - 1), lines[i].GetPosition(x), lines[j].GetPosition(y - 1), lines[j].GetPosition(y), out Vector2 intersection))
+                        if (Math2d.LineSegmentsIntersection(lineRenderers[i].GetPosition(x - 1), lineRenderers[i].GetPosition(x), lineRenderers[j].GetPosition(y - 1), lineRenderers[j].GetPosition(y), out Vector2 intersection))
                         {
                             GameObject tLObj = Instantiate(trafficLightPrefab);
 
-                            tLObj.GetComponent<TrafficLight>().lines.Add(lineObjs[i]);
-                            tLObj.GetComponent<TrafficLight>().lines.Add(lineObjs[j]);
-                            tLObj.transform.position = intersection;
+                            List<GameObject> tLObjs = new List<GameObject>();
+                            tLObjs.Add(lineObjs[i]);
+                            tLObjs.Add(lineObjs[j]);
 
+                            tLObj.transform.position = new Vector3(intersection.x, intersection.y, 1);
+
+                            tLObj.GetComponent<TrafficLight>().Init(tLObjs, x - 1, y - 1);
+
+                            trafficLights.Add(tLObj.GetComponent<TrafficLight>());
                             trafficObjs.Add(tLObj);
                         }
                     }
@@ -107,21 +110,22 @@ public class GameManager : MonoBehaviour
     public string Info()
     {
         string sTrains = "";
-        foreach (Train train in trains)
+        foreach (var train in trains)
         {
             sTrains += Convert.ToString((float)Math.Round(train.Speed / train.MaxSpeed, 4), CultureInfo.InvariantCulture) + ",";
         }
 
         return sTrains +
             bonus + "," +
-            Convert.ToInt32(reset);
+            Convert.ToInt32(reset) + "," +
+            SubInfo();
     }
 
     public string TrainInfo(Train train)
     {
         return "Train" +
             "\n   Distance: " +
-            math.round(train.LineDistance * 100) +
+            math.round(train.lineDistance * 100) +
             " m" +
             "\n   Position: " +
             train.GetDistanceToEnd() +
@@ -130,11 +134,27 @@ public class GameManager : MonoBehaviour
             train.Speed +
             " km/h" +
             "\n   Dist / speed * 60: " +
-            train.LineDistance / 10 / train.Speed * 60 +
+            train.lineDistance / 10 / train.Speed * 60 +
             " min" +
             "\n   Time end: " +
-            train.TimeToEnd +
+            train.timeToEnd +
             " min";
+    }
+
+    public string SubInfo()
+    {
+        string info = "";
+
+        foreach (var tLight in trafficLights)
+        {
+            info += Convert.ToString((float)Math.Round(tLight.firstTrainPosition, 3), CultureInfo.InvariantCulture) + ",";
+            info += Convert.ToString((float)Math.Round(tLight.firstListLengthBefore, 3), CultureInfo.InvariantCulture) + ",";
+            info += Convert.ToString((float)Math.Round(tLight.secondTrainPosition, 3), CultureInfo.InvariantCulture) + ",";
+            info += Convert.ToString((float)Math.Round(tLight.secondListLengthBefore, 3), CultureInfo.InvariantCulture) + ",";
+        }
+        info = info.Remove(info.Length - 1);
+
+        return info;
     }
 
     public void ResetScene()
@@ -159,11 +179,10 @@ public class GameManager : MonoBehaviour
         }
 
         trafficObjs.Clear();
+        trafficLights.Clear();
         InstTrafficLight();
 
         time = 0;
-
-        network.trains = trains;
     }
 
     public void AddBonus(int count)
@@ -175,10 +194,10 @@ public class GameManager : MonoBehaviour
     public void AddOneBonus()
     {
         if (starting)
-            bonus ++;
+            bonus++;
     }
 
-    private void AddOneTime()
+    private void AddOneSecond()
     {
         if (starting)
             time++;

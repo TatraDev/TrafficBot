@@ -343,13 +343,7 @@ MonoBehaviour:
   bonusText: {fileID: 2075107252}
   train_1StatusText: {fileID: 998042241}
   train_2StatusText: {fileID: 1579705041}
-  lines: []
-  lineScripts: []
-  trafficObjs: []
-  intersections: []
   trains: []
-  trafficLightPrefab: {fileID: 3950775336158456515, guid: e4dfc2dbddce5c64888724319acce571,
-    type: 3}
 --- !u!4 &668899052
 Transform:
   m_ObjectHideFlags: 0
@@ -373,14 +367,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 668899050}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe68624d2e70d4440b9712bd2441eb5a, type: 3}
+  m_Script: {fileID: 11500000, guid: 0dc1a85f50341af42bc6f91ad2eb51d2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  trains: []
-  text: none
   connectionIP: 127.0.0.1
   connectionPort: 25001
-  running: 1
 --- !u!1 &677068234
 GameObject:
   m_ObjectHideFlags: 0
@@ -706,6 +697,7 @@ MonoBehaviour:
   manager: {fileID: 0}
   trainPrefab: {fileID: 2836151267011186001, guid: 60c65c503fa7f094fae49757089310aa,
     type: 3}
+  train: {fileID: 0}
   capPrefab: {fileID: 0}
   randomisePoints: 0
   from_1: {x: 0, y: 0}
@@ -1249,6 +1241,7 @@ MonoBehaviour:
   manager: {fileID: 0}
   trainPrefab: {fileID: 2836151267011186001, guid: 60c65c503fa7f094fae49757089310aa,
     type: 3}
+  train: {fileID: 0}
   capPrefab: {fileID: 0}
   randomisePoints: 0
   from_1: {x: 0, y: 0}
@@ -1468,6 +1461,7 @@ MonoBehaviour:
   manager: {fileID: 668899051}
   trainPrefab: {fileID: 2836151267011186001, guid: 60c65c503fa7f094fae49757089310aa,
     type: 3}
+  train: {fileID: 0}
   capPrefab: {fileID: 2885843883500214770, guid: 4f651eaa60fa1a44085ec4f8b7e4989c,
     type: 3}
   randomisePoints: 1
@@ -1518,7 +1512,7 @@ LineRenderer:
   - {x: -2, y: -4.5, z: 1}
   - {x: -1.16, y: -2.98, z: 1}
   - {x: -1.15, y: 1.03, z: 1}
-  - {x: -2, y: 3, z: 1}
+  - {x: -2, y: 3.5, z: 1}
   m_Parameters:
     serializedVersion: 3
     widthMultiplier: 0.08
@@ -1621,6 +1615,7 @@ MonoBehaviour:
   manager: {fileID: 0}
   trainPrefab: {fileID: 2836151267011186001, guid: 60c65c503fa7f094fae49757089310aa,
     type: 3}
+  train: {fileID: 0}
   capPrefab: {fileID: 0}
   randomisePoints: 0
   from_1: {x: 0, y: 0}
@@ -1889,6 +1884,7 @@ MonoBehaviour:
   manager: {fileID: 0}
   trainPrefab: {fileID: 2836151267011186001, guid: 60c65c503fa7f094fae49757089310aa,
     type: 3}
+  train: {fileID: 0}
   capPrefab: {fileID: 0}
   randomisePoints: 0
   from_1: {x: 0, y: 0}
@@ -2231,6 +2227,7 @@ MonoBehaviour:
   manager: {fileID: 668899051}
   trainPrefab: {fileID: 2836151267011186001, guid: 60c65c503fa7f094fae49757089310aa,
     type: 3}
+  train: {fileID: 0}
   capPrefab: {fileID: 2885843883500214770, guid: 4f651eaa60fa1a44085ec4f8b7e4989c,
     type: 3}
   randomisePoints: 1
@@ -2384,6 +2381,7 @@ MonoBehaviour:
   manager: {fileID: 0}
   trainPrefab: {fileID: 2836151267011186001, guid: 60c65c503fa7f094fae49757089310aa,
     type: 3}
+  train: {fileID: 0}
   capPrefab: {fileID: 0}
   randomisePoints: 0
   from_1: {x: 0, y: 0}

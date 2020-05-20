@@ -17,15 +17,16 @@ def step(action):
 
     stringData = dataReceive.decode("utf-8")
     stringDataList = stringData.split(',')
-
+    
     observation = [float(stringDataList[0]),float(stringDataList[1])]
     revard = int(stringDataList[2])
     done = bool(int(stringDataList[3]))
+    info = {0:[float(stringDataList[i]) for i in range(4,len(stringDataList))]}
 
     sock.close()
     time.sleep(0.5)
         
-    return observation, revard, done
+    return observation, revard, done, info
 
 def send(sText):
     host, port = "127.0.0.1", 25001
