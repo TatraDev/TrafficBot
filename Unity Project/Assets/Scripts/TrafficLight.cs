@@ -6,22 +6,24 @@ public class TrafficLight : MonoBehaviour
 {
     private List<GameObject> lines = new List<GameObject>();
 
-    public float firstTrainPosition;
-    public float secondTrainPosition;
+    public float firstTrainPosition { get; private set; }
+    public float firstListLengthBefore { get; private set; }
+    public float secondTrainPosition { get; private set; }
+    public float secondListLengthBefore { get; private set; }
 
-    public float firstListLengthBefore;
-    public float secondListLengthBefore;
-
-    public Color good;
-    public Color сaution;
-    public Color prohibited;
+    [SerializeField]
+    private Color good;
+    [SerializeField]
+    private Color сaution;
+    [SerializeField]
+    private Color prohibited;
 
     public void Init(List<GameObject> lines, int firstLineIndexBefore, int secondLineIndexBefore)
     {
         this.lines = lines;
 
-        LengthToIntersection(lines[0].GetComponent<LineRenderer>(), firstLineIndexBefore, out firstListLengthBefore);
-        LengthToIntersection(lines[1].GetComponent<LineRenderer>(), secondLineIndexBefore, out secondListLengthBefore);
+        firstListLengthBefore = LengthToIntersection(lines[0].GetComponent<LineRenderer>(), firstLineIndexBefore);
+        secondListLengthBefore = LengthToIntersection(lines[1].GetComponent<LineRenderer>(), secondLineIndexBefore);
     }
 
     private void Update()
@@ -29,15 +31,17 @@ public class TrafficLight : MonoBehaviour
         Light();
     }
 
-    private void LengthToIntersection(LineRenderer line, int LineIndexBefore, out float LineLengthBefore)
+    private float LengthToIntersection(LineRenderer line, int LineIndexBefore)
     {
-        LineLengthBefore = 0;
+        float LineLengthBefore = 0;
 
         for (int i = 1; i < LineIndexBefore + 1; i++)
         {
             LineLengthBefore += (line.GetPosition(i) - line.GetPosition(i - 1)).magnitude;
         }
         LineLengthBefore += (transform.position - line.GetPosition(LineIndexBefore)).magnitude;
+
+        return LineLengthBefore;
     }
 
 

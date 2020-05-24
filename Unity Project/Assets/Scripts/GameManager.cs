@@ -9,8 +9,8 @@ using Unity.Mathematics;
 
 public class GameManager : MonoBehaviour
 {
-    public int bonus;
-    public int time;
+    private int bonus;
+    private int time;
     private int overTime = 100;
 
     public bool reset = false;
@@ -18,6 +18,8 @@ public class GameManager : MonoBehaviour
 
     public TMP_Text timeText;
     public TMP_Text bonusText;
+    public TMP_Text bonusesAddedText;
+    public TMP_Text resetLable;
     public TMP_Text train_1StatusText;
     public TMP_Text train_2StatusText;
 
@@ -25,13 +27,16 @@ public class GameManager : MonoBehaviour
     private List<LineRenderer> lineRenderers = new List<LineRenderer>();
     private List<Line> lineScripts = new List<Line>();
 
-    public GameObject trafficLightPrefab;
+    [SerializeField]
+    private GameObject trafficLightPrefab;
     private List<GameObject> trafficObjs = new List<GameObject>();
     private List<TrafficLight> trafficLights = new List<TrafficLight>();
 
     public List<Train> trains = new List<Train>();
 
     private Network network;
+
+    public AnimationCurve TextCurve;
     void Start()
     {
         InvokeRepeating("AddOneBonus", 1, 1);
@@ -45,22 +50,26 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
-        timeText.text = "Time: " + time;
-        bonusText.text = Convert.ToString(bonus);
-
-        train_1StatusText.text = TrainInfo(trains[0]);
+        train_1StatusText.text = TrainInfo(trains[0], 0);
         train_1StatusText.color = trains[0].GetComponent<SpriteRenderer>().color;
 
-        train_2StatusText.text = TrainInfo(trains[1]);
+        train_2StatusText.text = TrainInfo(trains[1], 1);
         train_2StatusText.color = trains[1].GetComponent<SpriteRenderer>().color;
 
         if (Input.GetKeyDown(KeyCode.R))
             ResetScene();
 
+        if (Input.GetKeyDown(KeyCode.T))
+            time = 95;
+
         if (overTime <= time)
-            ResetScene();
+        {
+            ResetScene("Time Over");
+        }
+
 
         trains[1].Speed = 5;
+        trains[1].endBonuses = 0;
     }
 
     void InitLines()
@@ -112,7 +121,7 @@ public class GameManager : MonoBehaviour
         string sTrains = "";
         foreach (var train in trains)
         {
-            sTrains += Convert.ToString((float)Math.Round(train.Speed / train.MaxSpeed, 4), CultureInfo.InvariantCulture) + ",";
+            sTrains += Convert.ToString((float)Math.Round(train.Speed / train.maxSpeed, 4), CultureInfo.InvariantCulture) + ",";
         }
 
         return sTrains +
@@ -121,9 +130,10 @@ public class GameManager : MonoBehaviour
             SubInfo();
     }
 
-    public string TrainInfo(Train train)
+    public string TrainInfo(Train train, int index)
     {
-        return "Train" +
+        return "Train_" +
+            index +
             "\n   Distance: " +
             math.round(train.lineDistance * 100) +
             " m" +
@@ -131,12 +141,9 @@ public class GameManager : MonoBehaviour
             train.GetDistanceToEnd() +
             " m" +
             "\n   Speed: " +
-            train.Speed +
+            (float)Math.Round(train.Speed, 2) +
             " km/h" +
-            "\n   Dist / speed * 60: " +
-            train.lineDistance / 10 / train.Speed * 60 +
-            " min" +
-            "\n   Time end: " +
+            "\n   Time to end: " +
             train.timeToEnd +
             " min";
     }
@@ -157,7 +164,34 @@ public class GameManager : MonoBehaviour
         return info;
     }
 
-    public void ResetScene()
+    public IEnumerator BonusedAddedInfo(int countAdd)
+    {
+        bonusesAddedText.text = "+ " + countAdd;
+        yield return new WaitForSeconds(0.3f);
+        bonusesAddedText.text = "";
+    }
+
+    public IEnumerator ResetInfo(string why)
+    {
+        resetLable.text = why + "\n" + bonus + " bonuses received";
+
+        for (float i = 0; i < 1; i += Time.deltaTime / 3)
+        {
+            resetLable.alpha = Mathf.Lerp(0f, 0.6f, TextCurve.Evaluate(i));
+
+            yield return null;
+        }
+
+        resetLable.alpha = 0;
+    }
+
+    public void ResetScore()
+    {
+        bonus = 0;
+        time = 0;
+    }
+
+    private void ResetObjectsAndСhangeLines()
     {
         reset = true;
         foreach (var train in trains)
@@ -181,35 +215,54 @@ public class GameManager : MonoBehaviour
         trafficObjs.Clear();
         trafficLights.Clear();
         InstTrafficLight();
+    }
 
+    public void ResetScene()
+    {
+        ResetObjectsAndСhangeLines();
+        time = 0;
+    }
+
+    public void ResetScene(string why)
+    {
+        StartCoroutine(ResetInfo(why));
+        ResetObjectsAndСhangeLines();
         time = 0;
     }
 
     public void AddBonus(int count)
     {
-        if (starting)
+        if (starting && count > 0)
+        {
+            StopCoroutine("BonusedAddedInfo");
+            StartCoroutine(BonusedAddedInfo(count));
             bonus += count;
+            bonusText.text = Convert.ToString(bonus);
+        }
     }
 
-    public void AddOneBonus()
+    private void AddOneBonus()
     {
         if (starting)
+        {
+            StartCoroutine(BonusedAddedInfo(1));
             bonus++;
+            bonusText.text = Convert.ToString(bonus);
+        }
     }
 
     private void AddOneSecond()
     {
         if (starting)
+        {
             time++;
-    }
-
-    public void SetTrainSpeed(int index, float speed)
-    {
-        trains[index].GetComponent<Train>().Speed = speed;
+            timeText.text = "Time: " + time;
+        }
     }
 
     public void EnableScript()
     {
+        ResetScene();
         Debug.Log(Application.dataPath);
         System.Diagnostics.Process proc = new System.Diagnostics.Process();
         proc.StartInfo.FileName = Application.dataPath + "/TrafficBot/traffic_env.py";

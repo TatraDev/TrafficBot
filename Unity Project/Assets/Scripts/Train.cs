@@ -8,10 +8,11 @@ public class Train : MonoBehaviour
 {
     private Vector2 endPoint;
     private Vector2 nextPoint;
+    public int endBonuses = 5;
 
     private int nextPointIndex;
 
-    public float MaxSpeed { get; private set; } = 120;
+    public float maxSpeed { get; private set; } = 120;
 
     private float speed = 5f;
     public float Speed
@@ -20,7 +21,7 @@ public class Train : MonoBehaviour
         set
         {
             if (value <= 0) speed = 0;
-            else if (value >= MaxSpeed) speed = MaxSpeed;
+            else if (value >= maxSpeed) speed = maxSpeed;
             else speed = value;
         }
     }
@@ -87,7 +88,7 @@ public class Train : MonoBehaviour
             linePoints.Reverse();
             endPoint = linePoints[line.positionCount - 1];
 
-            manager.AddBonus(5);
+            manager.AddBonus(endBonuses);
         }
         else if (rb.position == nextPoint)
         {
@@ -135,7 +136,7 @@ public class Train : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collider)
     {
-        manager.ResetScene();
+        manager.ResetScene("Trains Crash");
     }
 
     public float GetDistanceToEnd()

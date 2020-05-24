@@ -7,8 +7,10 @@ using System.Collections;
 
 public class Network : MonoBehaviour
 {
-    [SerializeField] private string connectionIP = "127.0.0.1";
-    [SerializeField] private int connectionPort = 25001;
+    [SerializeField] 
+    private string connectionIP = "127.0.0.1";
+    [SerializeField] 
+    private int connectionPort = 25001;
 
     private GameManager manager;
     private Thread mThread;
@@ -17,11 +19,11 @@ public class Network : MonoBehaviour
     private TcpClient client;
     private NetworkStream nwStream;
 
-    private float randSpeed;
+    private float randSpeed = 0;
     private bool received;
     private bool stop;
 
-    private void FixedUpdate()
+    private void Update()
     {
         randSpeed = Random.Range(1.5f, 2f);
     }
@@ -95,8 +97,7 @@ public class Network : MonoBehaviour
             if (dataReceived == "start")
             {
                 manager.starting = true;
-                manager.bonus = 0;
-                manager.time = 0;
+                manager.ResetScore();
             }
 
             if (manager.starting == true)
@@ -112,9 +113,8 @@ public class Network : MonoBehaviour
 
         if (manager.reset == true)
         {
-            manager.bonus = 0;
-            manager.time = 0;
             manager.reset = false;
+            manager.ResetScore();
         }
     }
 
