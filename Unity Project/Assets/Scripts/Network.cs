@@ -7,12 +7,12 @@ using System.Collections;
 
 public class Network : MonoBehaviour
 {
-    [SerializeField] 
+    [SerializeField]
     private string connectionIP = "127.0.0.1";
-    [SerializeField] 
+
+    [SerializeField]
     private int connectionPort = 25001;
 
-    private GameManager manager;
     private Thread mThread;
     private TcpListener listener;
 
@@ -20,7 +20,8 @@ public class Network : MonoBehaviour
     private NetworkStream nwStream;
 
     private float randSpeed = 0;
-    private bool received;
+    private bool isStart;
+    private bool isReceive;
     private bool stop;
 
     private void Update()
@@ -28,10 +29,8 @@ public class Network : MonoBehaviour
         randSpeed = Random.Range(1.5f, 2f);
     }
 
-    public void Inst(GameManager manager)
+    public void Inst()
     {
-        this.manager = manager;
-
         ThreadStart threadStart = new ThreadStart(ReceiveThreadWhile);
         mThread = new Thread(threadStart);
         mThread.Start();
@@ -49,18 +48,18 @@ public class Network : MonoBehaviour
     {
         Connect();
 
-        received = false;
+        isReceive = false;
 
         while (!stop)
         {
-            if (!received)
+            if (!isReceive)
             {
                 client = listener.AcceptTcpClient();
                 nwStream = client.GetStream();
 
                 Receive();
 
-                received = true;
+                isReceive = true;
             }
         }
         listener.Stop();
@@ -68,19 +67,32 @@ public class Network : MonoBehaviour
 
     private IEnumerator SendRutineWhile()
     {
+        float i = 0;
+
         while (!stop)
         {
             yield return null;
 
-            if (received)
+            if (i < 6)
+            {
+                i += Time.deltaTime;
+            }
+            else if (!isReceive)
+            {
+                Debug.Log("Disconnect");
+            }
+
+            if (isReceive)
             {
                 Send();
 
                 nwStream.Close();
                 client.Close();
+
+                i = 0;
             }
 
-            received = false;
+            isReceive = false;
         }
         listener.Stop();
     }
@@ -96,11 +108,11 @@ public class Network : MonoBehaviour
         {
             if (dataReceived == "start")
             {
-                manager.starting = true;
-                manager.ResetScore();
+                GameManager.main.ResetScore();
+                isStart = true;
             }
 
-            if (manager.starting == true)
+            if (isStart && GameManager.main.isReady)
             {
                 StringToTrainsSpeed(dataReceived);
             }
@@ -108,13 +120,13 @@ public class Network : MonoBehaviour
     }
     private void Send()
     {
-        byte[] data = Encoding.UTF8.GetBytes(manager.Info());
+        byte[] data = Encoding.UTF8.GetBytes(GameManager.main.Info());
         nwStream.Write(data, 0, data.Length);
 
-        if (manager.reset == true)
+        if (GameManager.main.reset == true)
         {
-            manager.reset = false;
-            manager.ResetScore();
+            GameManager.main.reset = false;
+            GameManager.main.ResetScore();
         }
     }
 
@@ -125,9 +137,9 @@ public class Network : MonoBehaviour
         for (int i = 0; i < sArray.Length; i++)
         {
             if (sArray[i] == "1")
-                manager.trains[i].Speed += randSpeed;
+                GameManager.main.trains[i].Speed += randSpeed;
             else if (sArray[i] == "0")
-                manager.trains[i].Speed -= randSpeed;
+                GameManager.main.trains[i].Speed -= randSpeed;
         }
     }
 

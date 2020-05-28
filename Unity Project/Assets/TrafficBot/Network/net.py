@@ -17,11 +17,16 @@ def step(action):
 
     stringData = dataReceive.decode("utf-8")
     stringDataList = stringData.split(',')
+    print(stringDataList)
+
+    index = int(stringDataList[0])
+
+    observation = [float(stringDataList[i]) for i in range(1,index)]
+
+    revard = int(stringDataList[index + 1])
+    done = bool(int(stringDataList[index + 2]))
     
-    observation = [float(stringDataList[0]),float(stringDataList[1])]
-    revard = int(stringDataList[2])
-    done = bool(int(stringDataList[3]))
-    info = {0:[float(stringDataList[i]) for i in range(4,len(stringDataList))]}
+    info = {0:[float(stringDataList[i]) for i in range(index + 3,len(stringDataList))]}
 
     sock.close()
     time.sleep(0.5)
@@ -39,4 +44,3 @@ def send(sText):
         sock.close()
     else:
         print("Not a string")
-            

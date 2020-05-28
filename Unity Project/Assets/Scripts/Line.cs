@@ -2,16 +2,20 @@
 
 public class Line : MonoBehaviour
 {
-    [SerializeField] private GameManager manager = default;
-    [SerializeField] private GameObject trainPrefab = default;
-    [SerializeField] private GameObject capPrefab = default;
+    [SerializeField]
+    private GameObject trainPrefab = default;
+
+    [SerializeField]
+    private GameObject capPrefab = default;
+
     public GameObject train;
 
     private LineRenderer line;
 
     private Color color;
 
-    public bool randomisePoints;
+    [SerializeField]
+    private bool randomisePoints;
 
     public Vector2 from_1;
     public Vector2 to_1;
@@ -43,7 +47,7 @@ public class Line : MonoBehaviour
 
         train.GetComponent<SpriteRenderer>().color = color;
 
-        manager.trains.Add(train.GetComponent<Train>());
+        GameManager.main.trains.Add(train.GetComponent<Train>());
     }
 
     public void RandomisePointPosition()

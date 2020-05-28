@@ -35,7 +35,6 @@ public class Train : MonoBehaviour
     public float timeToEnd { get; private set; }
 
     private LineRenderer line;
-    private GameManager manager;
     private Rigidbody2D rb;
 
     private bool revers = false;
@@ -43,7 +42,6 @@ public class Train : MonoBehaviour
     private void Start()
     {
         line = GetComponentInParent<LineRenderer>();
-        manager = GameObject.FindGameObjectWithTag("GameManager").GetComponent<GameManager>();
         rb = GetComponent<Rigidbody2D>();
 
         for (int i = 0; i < line.positionCount; i++)
@@ -88,7 +86,7 @@ public class Train : MonoBehaviour
             linePoints.Reverse();
             endPoint = linePoints[line.positionCount - 1];
 
-            manager.AddBonus(endBonuses);
+            GameManager.main.AddBonus(endBonuses);
         }
         else if (rb.position == nextPoint)
         {
@@ -136,7 +134,15 @@ public class Train : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collider)
     {
-        manager.ResetScene("Trains Crash");
+        if (GameManager.main.isTrainsCrash)
+        {
+            GameManager.main.isTrainsCrash = false;
+        }
+        else if (!GameManager.main.isTrainsCrash)
+        {
+            GameManager.main.ResetScene("Trains Crash");
+            GameManager.main.isTrainsCrash = true;
+        }
     }
 
     public float GetDistanceToEnd()

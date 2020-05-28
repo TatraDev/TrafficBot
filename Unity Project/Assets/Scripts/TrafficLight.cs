@@ -11,12 +11,9 @@ public class TrafficLight : MonoBehaviour
     public float secondTrainPosition { get; private set; }
     public float secondListLengthBefore { get; private set; }
 
-    [SerializeField]
-    private Color good;
-    [SerializeField]
-    private Color сaution;
-    [SerializeField]
-    private Color prohibited;
+    public Color good;
+    public Color сaution;
+    public Color prohibited;
 
     public void Init(List<GameObject> lines, int firstLineIndexBefore, int secondLineIndexBefore)
     {
@@ -50,9 +47,11 @@ public class TrafficLight : MonoBehaviour
         firstTrainPosition = lines[0].GetComponent<Line>().train.GetComponent<Train>().trainPosition;
         secondTrainPosition = lines[1].GetComponent<Line>().train.GetComponent<Train>().trainPosition;
 
-        if ((firstListLengthBefore - firstTrainPosition < 0.8f ^ firstListLengthBefore - firstTrainPosition < -0.8f) && (secondListLengthBefore - secondTrainPosition < 0.8f ^ secondListLengthBefore - secondTrainPosition < -0.8f))
+        float distanceToEachOther = Mathf.Abs(firstListLengthBefore - firstTrainPosition) + Mathf.Abs(secondListLengthBefore - secondTrainPosition);
+
+        if (distanceToEachOther < 2f)
             GetComponent<SpriteRenderer>().color = prohibited;
-        else if ((firstListLengthBefore - firstTrainPosition < 1.8f ^ firstListLengthBefore - firstTrainPosition < -1.8f) && (secondListLengthBefore - secondTrainPosition < 1.8f ^ secondListLengthBefore - secondTrainPosition < -1.8f))
+        else if (distanceToEachOther < 3f)
             GetComponent<SpriteRenderer>().color = сaution;
         else
             GetComponent<SpriteRenderer>().color = good;

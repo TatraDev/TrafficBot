@@ -94,6 +94,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a08cb3276db789c45bfe91a11a935d5e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  good: {r: 0, g: 1, b: 0, a: 0.6}
-  "\u0441aution": {r: 1, g: 0.5, b: 0, a: 0.6}
-  prohibited: {r: 1, g: 0, b: 0, a: 0.6}
+  good: {r: 0.5, g: 1, b: 0.5, a: 1}
+  "\u0441aution": {r: 1, g: 0.7509804, b: 0.5, a: 1}
+  prohibited: {r: 1, g: 0.5, b: 0.5, a: 1}

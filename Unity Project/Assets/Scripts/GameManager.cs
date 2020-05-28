@@ -9,19 +9,23 @@ using Unity.Mathematics;
 
 public class GameManager : MonoBehaviour
 {
+    public static GameManager main;
+
     private int bonus;
     private int time;
     private int overTime = 100;
+    private int runsCount = 0;
 
     public bool reset = false;
-    public bool starting = false;
+    public bool isReady = false;
+    public bool isTrainsCrash = false;
 
     public TMP_Text timeText;
     public TMP_Text bonusText;
     public TMP_Text bonusesAddedText;
     public TMP_Text resetLable;
-    public TMP_Text train_1StatusText;
-    public TMP_Text train_2StatusText;
+    public TMP_Text trainStatusText;
+    public TMP_Text log;
 
     private GameObject[] lineObjs;
     private List<LineRenderer> lineRenderers = new List<LineRenderer>();
@@ -29,35 +33,59 @@ public class GameManager : MonoBehaviour
 
     [SerializeField]
     private GameObject trafficLightPrefab;
-    private List<GameObject> trafficObjs = new List<GameObject>();
+
+    private List<GameObject> trafficLightObjs = new List<GameObject>();
     private List<TrafficLight> trafficLights = new List<TrafficLight>();
 
     public List<Train> trains = new List<Train>();
 
     private Network network;
 
-    public AnimationCurve TextCurve;
+    [SerializeField]
+    private AnimationCurve TextCurve;
+
+    void Awake()
+    {
+        if (main != null && main != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        main = this;
+
+        bonus = 0;
+        time = 0;
+    }
+
     void Start()
     {
         InvokeRepeating("AddOneBonus", 1, 1);
         InvokeRepeating("AddOneSecond", 1, 1);
 
-        network = GetComponent<Network>();
-
         InitLines();
-        network.Inst(this);
+
+        isReady = true;
+
+        network = GetComponent<Network>();
+        network.Inst();
     }
 
     void Update()
     {
-        train_1StatusText.text = TrainInfo(trains[0], 0);
-        train_1StatusText.color = trains[0].GetComponent<SpriteRenderer>().color;
-
-        train_2StatusText.text = TrainInfo(trains[1], 1);
-        train_2StatusText.color = trains[1].GetComponent<SpriteRenderer>().color;
+        trainStatusText.text = "";
+        for (int i = 0; i < trains.Count; i++)
+        {
+            string color = ColorUtility.ToHtmlStringRGB(trains[i].GetComponent<SpriteRenderer>().color);
+            trainStatusText.text += "<color=#" + color + ">";
+            trainStatusText.text += TrainInfo(trains[i], i) + "\n\n";
+        }
 
         if (Input.GetKeyDown(KeyCode.R))
+        {
+            ResetScore();
             ResetScene();
+        }
 
         if (Input.GetKeyDown(KeyCode.T))
             time = 95;
@@ -67,8 +95,7 @@ public class GameManager : MonoBehaviour
             ResetScene("Time Over");
         }
 
-
-        trains[1].Speed = 5;
+        trains[1].Speed = 50;
         trains[1].endBonuses = 0;
     }
 
@@ -108,7 +135,7 @@ public class GameManager : MonoBehaviour
                             tLObj.GetComponent<TrafficLight>().Init(tLObjs, x - 1, y - 1);
 
                             trafficLights.Add(tLObj.GetComponent<TrafficLight>());
-                            trafficObjs.Add(tLObj);
+                            trafficLightObjs.Add(tLObj);
                         }
                     }
                 }
@@ -118,7 +145,7 @@ public class GameManager : MonoBehaviour
 
     public string Info()
     {
-        string sTrains = "";
+        string sTrains = trains.Count + ",";
         foreach (var train in trains)
         {
             sTrains += Convert.ToString((float)Math.Round(train.Speed / train.maxSpeed, 4), CultureInfo.InvariantCulture) + ",";
@@ -127,7 +154,7 @@ public class GameManager : MonoBehaviour
         return sTrains +
             bonus + "," +
             Convert.ToInt32(reset) + "," +
-            SubInfo();
+            TrafficLightsInfo();
     }
 
     public string TrainInfo(Train train, int index)
@@ -143,12 +170,12 @@ public class GameManager : MonoBehaviour
             "\n   Speed: " +
             (float)Math.Round(train.Speed, 2) +
             " km/h" +
-            "\n   Time to end: " +
+            "\n   Time on end: " +
             train.timeToEnd +
             " min";
     }
 
-    public string SubInfo()
+    public string TrafficLightsInfo()
     {
         string info = "";
 
@@ -167,13 +194,15 @@ public class GameManager : MonoBehaviour
     public IEnumerator BonusedAddedInfo(int countAdd)
     {
         bonusesAddedText.text = "+ " + countAdd;
-        yield return new WaitForSeconds(0.3f);
+        yield return new WaitForSeconds(0.4f);
         bonusesAddedText.text = "";
     }
 
-    public IEnumerator ResetInfo(string why)
+    private IEnumerator ResetInfo(string cause)
     {
-        resetLable.text = why + "\n" + bonus + " bonuses received";
+        resetLable.text = cause + "\n" + bonus + " bonuses received";
+        log.text += "Run:  " + runsCount + ". Time: " + time + ". " + cause + ". " + bonus + " bonuses received" + ";\n";
+        runsCount++;
 
         for (float i = 0; i < 1; i += Time.deltaTime / 3)
         {
@@ -185,14 +214,10 @@ public class GameManager : MonoBehaviour
         resetLable.alpha = 0;
     }
 
-    public void ResetScore()
-    {
-        bonus = 0;
-        time = 0;
-    }
-
     private void ResetObjectsAndСhangeLines()
     {
+        isReady = false;
+
         reset = true;
         foreach (var train in trains)
         {
@@ -201,20 +226,28 @@ public class GameManager : MonoBehaviour
 
         trains.Clear();
 
-        foreach (Line script in lineScripts)
+        foreach (var lineScript in lineScripts)
         {
-            script.InstTrain();
-            script.RandomisePointPosition();
+            lineScript.InstTrain();
+            lineScript.RandomisePointPosition();
         }
 
-        foreach (var obj in trafficObjs)
+        foreach (var trafficLightObj in trafficLightObjs)
         {
-            Destroy(obj.gameObject);
+            Destroy(trafficLightObj.gameObject);
         }
 
-        trafficObjs.Clear();
+        trafficLightObjs.Clear();
         trafficLights.Clear();
         InstTrafficLight();
+
+        isReady = true;
+    }
+
+    public void ResetScore()
+    {
+        bonus = 0;
+        time = 0;
     }
 
     public void ResetScene()
@@ -223,16 +256,16 @@ public class GameManager : MonoBehaviour
         time = 0;
     }
 
-    public void ResetScene(string why)
+    public void ResetScene(string cause)
     {
-        StartCoroutine(ResetInfo(why));
+        StartCoroutine(ResetInfo(cause));
         ResetObjectsAndСhangeLines();
         time = 0;
     }
 
     public void AddBonus(int count)
     {
-        if (starting && count > 0)
+        if (count > 0)
         {
             StopCoroutine("BonusedAddedInfo");
             StartCoroutine(BonusedAddedInfo(count));
@@ -243,21 +276,16 @@ public class GameManager : MonoBehaviour
 
     private void AddOneBonus()
     {
-        if (starting)
-        {
-            StartCoroutine(BonusedAddedInfo(1));
-            bonus++;
-            bonusText.text = Convert.ToString(bonus);
-        }
+        StartCoroutine(BonusedAddedInfo(1));
+        bonus++;
+        bonusText.text = Convert.ToString(bonus);
+
     }
 
     private void AddOneSecond()
     {
-        if (starting)
-        {
-            time++;
-            timeText.text = "Time: " + time;
-        }
+        time++;
+        timeText.text = "Time: " + time;
     }
 
     public void EnableScript()
