@@ -2,22 +2,18 @@
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
-using System;
 
 public class Train : MonoBehaviour
 {
-    private Vector2 endPoint;
-    private Vector2 nextPoint;
-    public int endBonuses = 5;
-
-    private int nextPointIndex;
-
-    public float maxSpeed { get; private set; } = 120;
-
-    private float speed = 5f;
+    private Vector3[] points;
+    private float speed = 0;
     public float Speed
     {
-        get { return speed; }
+        get
+        {
+            return speed;
+        }
+
         set
         {
             if (value <= 0) speed = 0;
@@ -26,132 +22,135 @@ public class Train : MonoBehaviour
         }
     }
 
-    private List<Vector2> linePoints = new List<Vector2>();
+    public float maxSpeed { get; private set; } = 80;
+    public float trackDistance { get; private set; }
+    public float distanceToEnd { get; private set; }
+    public float distanceToTrain;
+    public float distanceToIntersection;
+    public bool isMoveBack { get; private set; } = false;
 
-    public float lineDistance { get; private set; } = 0;
-    public float trainPosition { get; private set; } = 0;
+    public bool isAddBonusesLook;
 
-    private float startTime;
-    public float timeToEnd { get; private set; }
+    private int nextPointIndex = 0;
 
-    private LineRenderer line;
     private Rigidbody2D rb;
-
-    private bool revers = false;
 
     private void Start()
     {
-        line = GetComponentInParent<LineRenderer>();
         rb = GetComponent<Rigidbody2D>();
-
-        for (int i = 0; i < line.positionCount; i++)
-        {
-            Vector3 point = line.GetPosition(i);
-
-            if (i != 0)
-            {
-                lineDistance += (point - line.GetPosition(i - 1)).magnitude;
-            }
-
-            linePoints.Add(point);
-        }
-
-        transform.position = linePoints[0];
-
-        nextPointIndex = 1;
-        nextPoint = linePoints[nextPointIndex];
-        endPoint = linePoints[line.positionCount - 1];
-
-        startTime = Time.timeSinceLevelLoad;
     }
 
-    private void FixedUpdate()
+    public void Init(Color color, Vector3[] points)
     {
-        SetTrainPosition();
-        Movement();
-        Rotation();
+        GetComponent<SpriteRenderer>().color = color;
+        this.points = points;
+        transform.position = points[0];
+        trackDistance = TrackDistance(points);
+        nextPointIndex = 0;
     }
 
-    private void Movement()
+    private int NextPointIndex(int pointIndex, int pointsLength)
     {
-        if (rb.position == endPoint)
+        if (pointIndex == pointsLength - 1)
         {
-            timeToEnd = Time.timeSinceLevelLoad - startTime;
-            startTime = Time.timeSinceLevelLoad;
-
-            revers = !revers;
-
+            isMoveBack = true;
             speed = 0;
-            nextPointIndex = 0;
-            linePoints.Reverse();
-            endPoint = linePoints[line.positionCount - 1];
 
-            GameManager.main.AddBonus(endBonuses);
+            if (!isAddBonusesLook)
+            {
+                GameManager.main.AddBonuses();
+            }
         }
-        else if (rb.position == nextPoint)
+        else if (pointIndex == 0)
         {
-            nextPointIndex++;
+            isMoveBack = false;
+            speed = 0;
 
-            nextPoint = linePoints[nextPointIndex];
+            if (!isAddBonusesLook)
+            {
+                GameManager.main.AddBonuses();
+            }
         }
 
-        Vector2 newPos = Vector2.MoveTowards(rb.position, nextPoint, speed / 6 * Time.fixedDeltaTime);
-        rb.MovePosition(newPos);
+        if (!isMoveBack)
+        {
+            pointIndex++;
+        }
+        else
+        {
+            pointIndex--;
+        }
+
+        return pointIndex;
     }
 
-    private void Rotation()
+    private void Rotation(Vector3 lookAt)
     {
-        float angleZ = math.atan2(transform.position.y - nextPoint.y, transform.position.x - nextPoint.x);
+        float angleZ = math.atan2(rb.position.y - lookAt.y, rb.position.x - lookAt.x);
         angleZ += 90 * math.PI / 180;
 
         Vector3 rot = Vector3.forward * angleZ;
         transform.rotation = quaternion.Euler(rot);
     }
 
-    private void SetTrainPosition()
+    private void FixedUpdate()
     {
-        trainPosition = 0;
-
-        for (int i = nextPointIndex; i < linePoints.Count; i++)
+        if (new Vector3(rb.position.x, rb.position.y, 1) == points[nextPointIndex])
         {
-            Vector3 point = linePoints[i];
+            nextPointIndex = NextPointIndex(nextPointIndex, points.Length);
+        }
+
+        distanceToEnd = DistanceToEnd();
+
+        float step = Speed / 6 * Time.fixedDeltaTime;
+
+        Vector2 newPos = Vector2.MoveTowards(rb.position, points[nextPointIndex], step);
+        rb.MovePosition(newPos);
+
+        Rotation(points[nextPointIndex]);
+    }
+
+    private float TrackDistance(Vector3[] points)
+    {
+        float distance = 0;
+
+        for (int i = 1; i < points.Length; i++)
+        {
+            distance += (points[i] - points[i - 1]).magnitude;
+        }
+
+        return distance;
+    }
+
+    private float DistanceToEnd()
+    {
+        float distanceToEnd = 0;
+        int nextPointIndex = this.nextPointIndex;
+
+        if (isMoveBack)
+        {
+            nextPointIndex = this.nextPointIndex + 1;
+        }
+
+        for (int i = nextPointIndex; i < points.Length; i++)
+        {
+            Vector3 point = points[i];
 
             if (i != nextPointIndex)
             {
-                trainPosition += (point - new Vector3(linePoints[i - 1].x, linePoints[i - 1].y, 1)).magnitude;
+                distanceToEnd += (point - points[i - 1]).magnitude;
             }
             else if (i == nextPointIndex)
             {
-                trainPosition += (transform.position - point).magnitude;
+                distanceToEnd += (point - transform.position).magnitude;
             }
         }
 
-        if (revers)
-            trainPosition = trainPosition;
-        else
-            trainPosition = lineDistance - trainPosition;
+        return distanceToEnd;
     }
 
-    private void OnTriggerEnter2D(Collider2D collider)
+    private void OnTriggerEnter2D(Collider2D other)
     {
-        if (GameManager.main.isTrainsCrash)
-        {
-            GameManager.main.isTrainsCrash = false;
-        }
-        else if (!GameManager.main.isTrainsCrash)
-        {
-            GameManager.main.ResetScene("Trains Crash");
-            GameManager.main.isTrainsCrash = true;
-        }
-    }
-
-    public float GetDistanceToEnd()
-    {
-        return (float)Math.Round(trainPosition * 100, 2);
-    }
-
-    public float GetPositionInPercent()
-    {
-        return math.round((100 - (trainPosition / lineDistance * 100)));
+        GameEvents.current.TrainTriggerEnter();
     }
 }

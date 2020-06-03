@@ -19,82 +19,54 @@ public class Network : MonoBehaviour
     private TcpClient client;
     private NetworkStream nwStream;
 
-    private float randSpeed = 0;
-    private bool isStart;
-    private bool isReceive;
     private bool stop;
 
-    private void Update()
+    private void Start()
     {
-        randSpeed = Random.Range(1.5f, 2f);
-    }
-
-    public void Inst()
-    {
-        ThreadStart threadStart = new ThreadStart(ReceiveThreadWhile);
+        ThreadStart threadStart = new ThreadStart(ThreadWhile);
         mThread = new Thread(threadStart);
         mThread.Start();
 
-        StartCoroutine(SendRutineWhile());
     }
 
-    public void Connect()
+    private void Connect()
     {
         listener = new TcpListener(IPAddress.Parse(connectionIP), connectionPort);
         listener.Start();
     }
 
-    private void ReceiveThreadWhile()
+    private void ThreadWhile()
     {
-        Connect();
+        GameManager.main.isNetworkWorking = false;
 
-        isReceive = false;
+        Connect();
 
         while (!stop)
         {
-            if (!isReceive)
-            {
-                client = listener.AcceptTcpClient();
-                nwStream = client.GetStream();
+            client = listener.AcceptTcpClient();
+            nwStream = client.GetStream();
 
-                Receive();
+            Receive();
 
-                isReceive = true;
-            }
+            UnityMainThreadDispatcher.Instance().Enqueue(Send());
+
+            GameManager.main.isNetworkWorking = true;
         }
+
         listener.Stop();
     }
 
-    private IEnumerator SendRutineWhile()
+    private void StringToTrainsSpeed(string sList)
     {
-        float i = 0;
+        string[] sArray = sList.Split(',');
 
-        while (!stop)
+        for (int i = 0; i < sArray.Length; i++)
         {
-            yield return null;
-
-            if (i < 6)
-            {
-                i += Time.deltaTime;
-            }
-            else if (!isReceive)
-            {
-                Debug.Log("Disconnect");
-            }
-
-            if (isReceive)
-            {
-                Send();
-
-                nwStream.Close();
-                client.Close();
-
-                i = 0;
-            }
-
-            isReceive = false;
+            if (sArray[i] == "1")
+                GameManager.main.trains[i].Speed += Random.Range(1.5f, 2f);
+            else if (sArray[i] == "0")
+                GameManager.main.trains[i].Speed -= Random.Range(2.5f, 3.5f);
         }
-        listener.Stop();
     }
 
     private void Receive()
@@ -106,60 +78,26 @@ public class Network : MonoBehaviour
 
         if (dataReceived != null && dataReceived.Length > 0)
         {
-            if (dataReceived == "start")
+            if (dataReceived == "reset")
             {
-                GameManager.main.ResetScore();
-                isStart = true;
+                UnityMainThreadDispatcher.Instance().EnqueueAsync(() => GameEvents.current.AddLog());
+                UnityMainThreadDispatcher.Instance().EnqueueAsync(() => GameEvents.current.GameRestart());
             }
-
-            if (isStart && GameManager.main.isReady)
+            else
             {
-                StringToTrainsSpeed(dataReceived);
+                UnityMainThreadDispatcher.Instance().Enqueue(() => StringToTrainsSpeed(dataReceived));
             }
         }
     }
-    private void Send()
+
+    private IEnumerator Send()
     {
+        yield return null;
+
         byte[] data = Encoding.UTF8.GetBytes(GameManager.main.Info());
         nwStream.Write(data, 0, data.Length);
 
-        if (GameManager.main.reset == true)
-        {
-            GameManager.main.reset = false;
-            GameManager.main.ResetScore();
-        }
-    }
-
-    private void StringToTrainsSpeed(string sList)
-    {
-        string[] sArray = sList.Split(',');
-
-        for (int i = 0; i < sArray.Length; i++)
-        {
-            if (sArray[i] == "1")
-                GameManager.main.trains[i].Speed += randSpeed;
-            else if (sArray[i] == "0")
-                GameManager.main.trains[i].Speed -= randSpeed;
-        }
-    }
-
-    private void OnDisable()
-    {
-        if (mThread != null)
-        {
-            stop = true;
-            listener.Stop();
-            mThread.Abort();
-        }
-    }
-
-    private void OnDestroy()
-    {
-        if (mThread != null)
-        {
-            stop = true;
-            listener.Stop();
-            mThread.Abort();
-        }
+        nwStream.Close();
+        client.Close();
     }
 }
