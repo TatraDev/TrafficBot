@@ -34,8 +34,10 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
-        trains[1].isAddBonusesLook = true;
-        trains[1].Speed = 60;
+        trains[1].isLookAddBonuses = true;
+        trains[1].Speed = 80;
+        //trains[2].isLookAddBonuses = true;
+        //trains[2].Speed = 40;
     }
 
     private IEnumerator Timer()
@@ -62,16 +64,14 @@ public class GameManager : MonoBehaviour
         string sTrains = trains.Count + ",";
         foreach (var train in trains)
         {
-            sTrains += Convert.ToString((float)Math.Round(train.distanceToIntersection / train.trackDistance, 3), CultureInfo.InvariantCulture) + ",";
+            sTrains += Convert.ToString((float)Math.Round(train.GetDistanceToIntersection() / train.trackDistance, 3), CultureInfo.InvariantCulture) + ",";
 
-            if (!train.isMoveBack)
-            {
-                sTrains += Convert.ToString((float)Math.Round(train.distanceToEnd / train.trackDistance, 3), CultureInfo.InvariantCulture) + ",";
-            }
-            else
-            {
-                sTrains += Convert.ToString((float)Math.Round(1 - train.distanceToEnd / train.trackDistance, 3), CultureInfo.InvariantCulture) + ",";
-            }
+            if (!train.isMoveBack) sTrains += Convert.ToString(
+                (float)Math.Round(train.distanceToEnd / train.trackDistance, 3), 
+                CultureInfo.InvariantCulture) + ",";
+            else sTrains += Convert.ToString(
+                (float)Math.Round(1 - train.distanceToEnd / train.trackDistance, 3), 
+                CultureInfo.InvariantCulture) + ",";
         }
 
         return sTrains +
@@ -92,7 +92,7 @@ public class GameManager : MonoBehaviour
         timer = StartCoroutine(Timer());
 
         restart = false;
-        bonuses = -1;
+        bonuses = 0;
         bonusFactor = 1;
 
         GameEvents.current.BonusesChanged();

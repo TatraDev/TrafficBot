@@ -16,6 +16,7 @@ public class GameInterface : MonoBehaviour
     public Scrollbar logScrollbar;
     private Coroutine popup;
     public AnimationCurve popupCurve;
+    private bool isFirst = true;
 
     private void Start()
     {
@@ -61,8 +62,16 @@ public class GameInterface : MonoBehaviour
 
     private void AddLog()
     {
-        PopupText($"Restart!\n{gameManager.bonuses} bonuses received");
-        Log();
+        if (!isFirst)
+        {
+            PopupText($"Restart!\n{gameManager.bonuses} bonuses received");
+            Log();
+        }
+        else
+        {
+            logLable.text = "";
+            isFirst = false;
+        }
     }
 
     private void Log()

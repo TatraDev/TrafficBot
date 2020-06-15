@@ -6,7 +6,7 @@ import pickle
 import json, sys, os
 from os import path
 import argparse
-from Network import net
+from WebSocketClient import wsclient
 
 class BinaryActionLinearPolicy(object):
     def __init__(self, theta):
@@ -63,20 +63,23 @@ class TrafficEnvironment:
             pass
 
         def reset(self):
-            obseravation = np.asarray(net.reset())
+            wsclient.send("reset")
+            observation, reward, done, info = wsclient.receive()
+            obseravation = np.asarray(observation)
             return obseravation
 
         def step(self, action: List[int]):
-            observation, reward, done, info = net.step(action)
+            wsclient.send(str(action))
+            observation, reward, done, info = wsclient.receive()
             observation = np.asarray(observation)
-            #print(observation, reward, done, info)
+            print(observation, reward, done, info)
             return observation, reward, done, info
 
 
 if __name__ == '__main__':
     env = TrafficEnvironment()
     params = dict(n_iter=100, batch_size=25, elite_frac=0.2)
-    num_steps = 200 * 10
+    num_steps = 200 * 5
     
     def noisy_evaluation(theta):
         agent = BinaryActionLinearPolicy(theta)

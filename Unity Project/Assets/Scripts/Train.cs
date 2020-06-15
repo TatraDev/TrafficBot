@@ -22,16 +22,20 @@ public class Train : MonoBehaviour
         }
     }
 
-    public float maxSpeed { get; private set; } = 80;
+    public float maxSpeed { get; private set; } = 100;
     public float trackDistance { get; private set; }
+    public List<IntersectionData> intersectionDatas = new List<IntersectionData>();
+    private List<float> distanceToIntersections = new List<float>();
     public float distanceToEnd { get; private set; }
-    public float distanceToTrain;
-    public float distanceToIntersection;
     public bool isMoveBack { get; private set; } = false;
-
-    public bool isAddBonusesLook;
-
+    public bool isLookAddBonuses;
     private int nextPointIndex = 0;
+
+    private int trackId;
+
+    public float distToImportantPoint { get; private set; }
+    public float otherTrainDistToInter { get; private set; }
+    public bool isNextImpPointFree { get; private set; }
 
     private Rigidbody2D rb;
 
@@ -42,6 +46,7 @@ public class Train : MonoBehaviour
 
     public void Init(Color color, Vector3[] points)
     {
+        intersectionDatas.Clear();
         GetComponent<SpriteRenderer>().color = color;
         this.points = points;
         transform.position = points[0];
@@ -49,27 +54,35 @@ public class Train : MonoBehaviour
         nextPointIndex = 0;
     }
 
+    public void Init(int trackId, Color color, Vector3[] points)
+    {
+        this.trackId = trackId;
+        Init(color, points);
+    }
+
     private int NextPointIndex(int pointIndex, int pointsLength)
     {
         if (pointIndex == pointsLength - 1)
         {
-            isMoveBack = true;
             speed = 0;
 
-            if (!isAddBonusesLook)
+            if (!isLookAddBonuses && !isMoveBack)
             {
                 GameManager.main.AddBonuses();
             }
+
+            isMoveBack = true;
         }
         else if (pointIndex == 0)
         {
-            isMoveBack = false;
             speed = 0;
 
-            if (!isAddBonusesLook)
+            if (!isLookAddBonuses && isMoveBack)
             {
                 GameManager.main.AddBonuses();
             }
+
+            isMoveBack = false;
         }
 
         if (!isMoveBack)
@@ -84,9 +97,60 @@ public class Train : MonoBehaviour
         return pointIndex;
     }
 
-    private void Rotation(Vector3 lookAt)
+    private void NextImportantPoint()
     {
-        float angleZ = math.atan2(rb.position.y - lookAt.y, rb.position.x - lookAt.x);
+        distanceToIntersections.Clear();
+        for (int i = 0; i < intersectionDatas.Count; i++)
+        {
+            if (!isMoveBack)
+                distanceToIntersections.Add(intersectionDatas[i].distanceToPosition - (trackDistance - distanceToEnd));
+            else
+                distanceToIntersections.Add(trackDistance - intersectionDatas[i].distanceToPosition - distanceToEnd);
+        }
+
+        float distToImportantPoint = 250;
+        float otherTrainDistToInter = 1;
+        int nextImportantPointId = trackId;
+
+        bool isChange = false;
+
+        for (int i = 0; i < distanceToIntersections.Count; i++)
+        {
+            if (distToImportantPoint > distanceToIntersections[i])
+            {
+                if (distanceToIntersections[i] >= 0)
+                {
+                    distToImportantPoint = distanceToIntersections[i] / trackDistance;
+                    nextImportantPointId = intersectionDatas[i].id;
+
+                    if (intersectionDatas[i].otherTrainIndex == 0)
+                        otherTrainDistToInter = intersectionDatas[i].intersection.firstTrainDistanceToIntersection / intersectionDatas[i].intersection.firstTrain.trackDistance;
+                    else
+                        otherTrainDistToInter = intersectionDatas[i].intersection.secondTrainDistanceToIntersection / intersectionDatas[i].intersection.secondTrain.trackDistance;
+
+                    isChange = true;
+                }
+            }
+        }
+
+        if (!isChange)
+        {
+            if (!isMoveBack)
+                distToImportantPoint = distanceToEnd / trackDistance;
+            else
+                distToImportantPoint = (trackDistance - distanceToEnd) / trackDistance;
+        }
+
+        this.distToImportantPoint = distToImportantPoint;
+
+        if (otherTrainDistToInter > 1) otherTrainDistToInter = 1;
+        this.otherTrainDistToInter = otherTrainDistToInter;
+        isNextImpPointFree = !isChange;
+    }
+
+    private void LookAt(Vector3 point)
+    {
+        float angleZ = math.atan2(rb.position.y - point.y, rb.position.x - point.x);
         angleZ += 90 * math.PI / 180;
 
         Vector3 rot = Vector3.forward * angleZ;
@@ -107,7 +171,13 @@ public class Train : MonoBehaviour
         Vector2 newPos = Vector2.MoveTowards(rb.position, points[nextPointIndex], step);
         rb.MovePosition(newPos);
 
-        Rotation(points[nextPointIndex]);
+        LookAt(points[nextPointIndex]);
+    }
+
+    private void Update()
+    {
+        //if (!isLookAddBonuses)
+        //    NextImportantPoint();
     }
 
     private float TrackDistance(Vector3[] points)
@@ -147,6 +217,16 @@ public class Train : MonoBehaviour
         }
 
         return distanceToEnd;
+    }
+
+    public float GetDistanceToIntersection()
+    {
+        float distanceToIntersection;
+
+        if (!isMoveBack) distanceToIntersection = intersectionDatas[0].distanceToPosition - (trackDistance - distanceToEnd);
+        else distanceToIntersection = trackDistance - intersectionDatas[0].distanceToPosition - distanceToEnd;
+
+        return distanceToIntersection;
     }
 
     private void OnTriggerEnter2D(Collider2D other)

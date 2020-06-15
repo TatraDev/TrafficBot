@@ -1,5 +1,4 @@
 ﻿using LineSegmentsIntersection;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -14,6 +13,7 @@ public struct RandomPoint
 [System.Serializable]
 public struct Track
 {
+    public int id;
     public LineRenderer lineRenderer;
     public RandomPoint[] randomPoints;
 }
@@ -27,22 +27,23 @@ public class Tracks : MonoBehaviour
     private List<GameObject> tracksCups = new List<GameObject>();
     private List<GameObject> intersectionsObjs = new List<GameObject>();
 
+    private bool isTrainsInts;
+
     public List<Train> trains { get; private set; } = new List<Train>();
 
     private void Start()
     {
         ResetTracksPoints();
-        InstTrains();
 
         GameEvents.current.onGameRestart += ResetTracksPoints;
     }
 
-    private Train InstTrain(Color color, Vector3[] points)
+    private Train InstTrain(int trackId, Color color, Vector3[] points)
     {
         Train train = Instantiate(trainPrefab).GetComponent<Train>();
         trains.Add(train);
 
-        train.Init(color, points);
+        train.Init(trackId, color, points);
 
         return train;
     }
@@ -59,7 +60,7 @@ public class Tracks : MonoBehaviour
             Vector3[] points = new Vector3[track.lineRenderer.positionCount];
             track.lineRenderer.GetPositions(points);
 
-            Train train = InstTrain(color, points);
+            Train train = InstTrain(track.id, color, points);
             train.transform.parent = track.lineRenderer.gameObject.transform;
         }
 
@@ -82,8 +83,10 @@ public class Tracks : MonoBehaviour
         }
     }
 
-    void InstIntersections()
+    void InstIntersections(int startId)
     {
+        int id = startId + 1;
+
         for (int i = 0; i < tracks.Length; i++)
         {
             for (int j = i + 1; j < tracks.Length; j++)
@@ -98,7 +101,9 @@ public class Tracks : MonoBehaviour
                             intersectionObj.transform.parent = transform;
                             intersectionObj.transform.position = new Vector3(intersection.x, intersection.y, 1);
 
-                            intersectionObj.GetComponent<Intersection>().Init(tracks[i].lineRenderer, tracks[j].lineRenderer, i, j, x - 1, y - 1);
+                            intersectionObj.GetComponent<Intersection>().Init(id, tracks[i].lineRenderer, tracks[j].lineRenderer, i, j, x - 1, y - 1);
+
+                            id++;
 
                             intersectionsObjs.Add(intersectionObj);
                         }
@@ -143,6 +148,10 @@ public class Tracks : MonoBehaviour
         DestroyIntersections();
         DestroyCups();
 
+        int id = 0;
+
+        for (int i = 0; i < tracks.Length; i++) { tracks[i].id = i; id = i; }
+
         foreach (Track track in tracks)
         {
             foreach (RandomPoint randomPoint in track.randomPoints)
@@ -160,7 +169,16 @@ public class Tracks : MonoBehaviour
             InstCup(track.lineRenderer.startColor, track.lineRenderer.GetPosition(track.lineRenderer.positionCount - 1));
         }
 
-        InstIntersections();
-        ReInitTrains();
+        if (!isTrainsInts)
+        {
+            InstTrains();
+            isTrainsInts = true;
+        }
+        else
+        {
+            ReInitTrains();
+        }
+
+        InstIntersections(id);
     }
 }

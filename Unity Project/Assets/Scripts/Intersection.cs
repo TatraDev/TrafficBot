@@ -2,35 +2,34 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public struct IntersectionData 
+{
+    public Intersection intersection;
+    public int id;
+    public float distanceToPosition;
+    public int otherTrainIndex;
+}
+
 public class Intersection : MonoBehaviour
 {
+    public Train firstTrain { get; private set; }
+    private float firstTrackDistance;
     public float firstTrainPosition { get; private set; }
-    public float firstListLengthBefore;
-    public float secondTrainPosition { get; private set; }
-    public float secondListLengthBefore;
+    private float firstDistBefore;
 
-    private int firstLineIndex;
-    private int secondLineIndex;
+    public Train secondTrain { get; private set; }
+    private float secondTrackDistance;
+    public float secondTrainPosition { get; private set; }
+    public float firstTrainDistanceToIntersection { get; private set; }
+    public float secondTrainDistanceToIntersection { get; private set; }
+
+    private float secondDistBefore;
 
     public Color good;
     public Color сaution;
     public Color prohibited;
 
-    public void Init(LineRenderer firstLine, LineRenderer secondLine, int firstLineIndex, int secondLineIndex, int firstLineIndexBefore, int secondLineIndexBefore)
-    {
-        this.firstLineIndex = firstLineIndex;
-        this.secondLineIndex = secondLineIndex;
-
-        firstListLengthBefore = LengthToIntersection(firstLine, firstLineIndexBefore);
-        secondListLengthBefore = LengthToIntersection(secondLine, secondLineIndexBefore);
-    }
-
-    private void Update()
-    {
-        Light();
-    }
-
-    private float LengthToIntersection(LineRenderer line, int LineIndexBefore)
+    private float DistanceToIntersection(LineRenderer line, int LineIndexBefore)
     {
         float LineLengthBefore = 0;
 
@@ -43,25 +42,61 @@ public class Intersection : MonoBehaviour
         return LineLengthBefore;
     }
 
-
-    private void Light()
+    public void Init(int id, LineRenderer firstLine, LineRenderer secondLine, int firstLineIndex, int secondLineIndex, int firstLineIndexBefore, int secondLineIndexBefore)
     {
-        firstTrainPosition = GameManager.main.trains[firstLineIndex].GetComponent<Train>().distanceToEnd;
-        secondTrainPosition = GameManager.main.trains[secondLineIndex].GetComponent<Train>().distanceToEnd;
+        firstTrain = GameManager.main.trains[firstLineIndex].GetComponent<Train>();
+        secondTrain = GameManager.main.trains[secondLineIndex].GetComponent<Train>();
 
-        float firstTrackDistance = GameManager.main.trains[firstLineIndex].GetComponent<Train>().trackDistance;
-        float secondTrackDistance = GameManager.main.trains[secondLineIndex].GetComponent<Train>().trackDistance;
+        firstTrackDistance = firstTrain.trackDistance;
+        secondTrackDistance = secondTrain.trackDistance;
 
-        float firstDistanceToIntersection = Mathf.Abs(firstListLengthBefore - (firstTrackDistance - firstTrainPosition));
-        float secondDistanceToIntersection = Mathf.Abs(secondListLengthBefore - (secondTrackDistance - secondTrainPosition));
+        firstDistBefore = DistanceToIntersection(firstLine, firstLineIndexBefore);
+        secondDistBefore = DistanceToIntersection(secondLine, secondLineIndexBefore);
 
-        float distanceToEachOther = firstDistanceToIntersection + secondDistanceToIntersection;
+        IntersectionData data;
+        data.intersection = this;
+        data.id = id;
 
-        GameManager.main.trains[firstLineIndex].GetComponent<Train>().distanceToIntersection = firstDistanceToIntersection;
-        GameManager.main.trains[secondLineIndex].GetComponent<Train>().distanceToIntersection = secondDistanceToIntersection;
+        data.distanceToPosition = firstDistBefore;
+        data.otherTrainIndex = 1;
+        firstTrain.intersectionDatas.Add(data);
 
-        GameManager.main.trains[firstLineIndex].GetComponent<Train>().distanceToTrain = distanceToEachOther;
-        GameManager.main.trains[secondLineIndex].GetComponent<Train>().distanceToTrain = distanceToEachOther;
+        data.distanceToPosition = secondDistBefore;
+        data.otherTrainIndex = 0;
+        secondTrain.intersectionDatas.Add(data);
+    }
+
+    private float DistanceToIntersection(Train train, float trackDistance, float distBeforeIntercetion)
+    {
+        float trainDistanceToEnd = train.distanceToEnd;
+        float trainDistanceToIntersection;
+
+        if (!train.isMoveBack)
+        {
+            trainDistanceToIntersection = distBeforeIntercetion - (trackDistance - trainDistanceToEnd);
+            if (trainDistanceToIntersection < 0)
+            {
+                trainDistanceToIntersection = -trainDistanceToIntersection + 2 * trainDistanceToEnd;
+            }
+        }
+        else
+        {
+            trainDistanceToIntersection = trackDistance - distBeforeIntercetion - trainDistanceToEnd;
+            if (trainDistanceToIntersection < 0)
+            {
+                trainDistanceToIntersection = -trainDistanceToIntersection + 2 * (trackDistance - trainDistanceToEnd);
+            }
+        }
+
+        return trainDistanceToIntersection;
+    }
+
+    private void FixedUpdate()
+    {
+        firstTrainDistanceToIntersection = DistanceToIntersection(firstTrain, firstTrackDistance, firstDistBefore);
+        secondTrainDistanceToIntersection = DistanceToIntersection(secondTrain, secondTrackDistance, secondDistBefore);
+
+        float distanceToEachOther = Mathf.Abs(firstTrainDistanceToIntersection) + Mathf.Abs(secondTrainDistanceToIntersection);
 
         if (distanceToEachOther < 2f)
             GetComponent<SpriteRenderer>().color = prohibited;
