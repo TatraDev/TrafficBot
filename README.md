@@ -10,5 +10,5 @@ Scheduler for any traffic as a game
 
 ## Launch Demo WebGL
 1. Run server
-2. Open index in you'r browser
+2. Open index.html in Build WebGL
 3. Run traffic_env 
