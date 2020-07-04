@@ -223,8 +223,8 @@ public class Train : MonoBehaviour
     {
         float distanceToIntersection;
 
-        if (!isMoveBack) distanceToIntersection = intersectionDatas[0].distanceToPosition - (trackDistance - distanceToEnd);
-        else distanceToIntersection = trackDistance - intersectionDatas[0].distanceToPosition - distanceToEnd;
+        if (!isMoveBack) distanceToIntersection = (intersectionDatas[0].distanceToPosition - (trackDistance - distanceToEnd)) / trackDistance;
+        else distanceToIntersection = (trackDistance - intersectionDatas[0].distanceToPosition - distanceToEnd) / trackDistance;
 
         return distanceToIntersection;
     }

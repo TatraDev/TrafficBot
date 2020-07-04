@@ -7,6 +7,7 @@ import json, sys, os
 from os import path
 import argparse
 from WebSocketClient import wsclient
+from time import sleep
 
 class BinaryActionLinearPolicy(object):
     def __init__(self, theta):
@@ -72,13 +73,15 @@ class TrafficEnvironment:
             wsclient.send(str(action))
             observation, reward, done, info = wsclient.receive()
             observation = np.asarray(observation)
+
             print(observation, reward, done, info)
+            
             return observation, reward, done, info
 
 
 if __name__ == '__main__':
     env = TrafficEnvironment()
-    params = dict(n_iter=100, batch_size=25, elite_frac=0.2)
+    params = dict(n_iter=100, batch_size=10, elite_frac=0.2)
     num_steps = 200 * 5
     
     def noisy_evaluation(theta):
@@ -86,6 +89,6 @@ if __name__ == '__main__':
         rew, T = do_rollout(agent, env, num_steps)
         return rew
 
-    for (i, iterdata) in enumerate(cem(noisy_evaluation, np.zeros(4 + 1), **params)):
+    for (i, iterdata) in enumerate(cem(noisy_evaluation, np.zeros(2 + 1), **params)):
         print('Iteration %2i. Episode mean reward: %7.3f'%(i, iterdata['y_mean']))
         agent = BinaryActionLinearPolicy(iterdata['theta_mean'])

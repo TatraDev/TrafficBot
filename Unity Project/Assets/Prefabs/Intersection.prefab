@@ -27,7 +27,7 @@ Transform:
   m_GameObject: {fileID: 3950775336158456515}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.2, y: 0.2, z: 1}
+  m_LocalScale: {x: 0.21, y: 0.21, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -94,6 +94,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4c7464fcbf3ff684aba20a4f1ab38027, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  good: {r: 0.56798154, g: 1, b: 0.5, a: 0.8}
-  "\u0441aution": {r: 1, g: 0.7472838, b: 0.5, a: 0.8}
-  prohibited: {r: 1, g: 0.5, b: 0.5, a: 0.8}
+  good: {r: 0.8, g: 0.8, b: 0.8, a: 0.5019608}
+  "\u0441aution": {r: 0.8000001, g: 0.8000001, b: 0.8000001, a: 0.5019608}
+  prohibited: {r: 0.8000001, g: 0.8000001, b: 0.8000001, a: 0.5019608}

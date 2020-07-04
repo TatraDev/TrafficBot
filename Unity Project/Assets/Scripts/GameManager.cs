@@ -24,6 +24,17 @@ public class GameManager : MonoBehaviour
         main = this;
     }
 
+    private IEnumerator Timer()
+    {
+        while (true)
+        {
+            int seconds = 1;
+            yield return new WaitForSecondsRealtime(seconds);
+            time += seconds;
+            GameEvents.current.TimeChanged();
+        }
+    }
+
     private void Start()
     {
         GameEvents.current.onTrainTriggerEnter += OnTrainCrash;
@@ -40,21 +51,10 @@ public class GameManager : MonoBehaviour
         //trains[2].Speed = 40;
     }
 
-    private IEnumerator Timer()
-    {
-        while (true)
-        {
-            int seconds = 1;
-            yield return new WaitForSecondsRealtime(seconds);
-            time += seconds;
-            GameEvents.current.TimeChanged();
-        }
-    }
-
     public void AddBonuses()
     {
         bonuses += 1 * bonusFactor;
-        bonusFactor++;
+        //bonusFactor++;
 
         GameEvents.current.BonusesChanged();
     }
@@ -62,21 +62,32 @@ public class GameManager : MonoBehaviour
     public string Info()
     {
         string sTrains = trains.Count + ",";
+
         foreach (var train in trains)
         {
-            sTrains += Convert.ToString((float)Math.Round(train.GetDistanceToIntersection() / train.trackDistance, 3), CultureInfo.InvariantCulture) + ",";
+            sTrains += Convert.ToString((float)Math.Round(train.GetDistanceToIntersection(), 2),
+                CultureInfo.InvariantCulture) + ",";
 
-            if (!train.isMoveBack) sTrains += Convert.ToString(
-                (float)Math.Round(train.distanceToEnd / train.trackDistance, 3), 
-                CultureInfo.InvariantCulture) + ",";
-            else sTrains += Convert.ToString(
-                (float)Math.Round(1 - train.distanceToEnd / train.trackDistance, 3), 
-                CultureInfo.InvariantCulture) + ",";
+            //sTrains += Convert.ToInt16(train.isMoveBack) + ",";
+
+            /*if (!train.isMoveBack)
+            {
+                sTrains += Convert.ToString(
+                   (float)Math.Round(train.distanceToEnd / train.trackDistance, 2),
+                    CultureInfo.InvariantCulture) + ",";
+            }
+            else 
+            {
+                sTrains += Convert.ToString(
+                    (float)Math.Round(1 - train.distanceToEnd / train.trackDistance, 2),
+                    CultureInfo.InvariantCulture) + ",";
+            }*/
         }
 
-        return sTrains +
-            Mathf.RoundToInt(bonuses) + "," +
-            Convert.ToInt32(restart);
+        sTrains += Mathf.RoundToInt(bonuses) + ",";
+        sTrains += Convert.ToInt32(restart);
+
+        return sTrains;
     }
 
     private void OnTrainCrash()

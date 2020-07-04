@@ -1,27 +1,32 @@
-from websocket import create_connection
-import time
-ws = create_connection("ws://localhost:8000/")
+import requests
+
+
+unity_data_URL = 'http://127.0.0.1:8000/TrafficBot/unity'
+action_URL = 'http://127.0.0.1:8000/TrafficBot/bot'
+
 
 def send(act):
-    s = "AI"+act
-    ws.send(s)
+    act = {'bot_data': str(act)}
+    requests.post(action_URL, data=act)
+
 
 def receive():
-    while(True):
-        data = ws.recv()
+    while True:
+        data = requests.get(unity_data_URL)
+        data = data.text
 
-        if(type(data) == bytes):
-            data = data.decode("utf-8")
-            
         try:
             data_list = data.split(',')
-            index = int(data_list[0]) * 2
+            index = int(data_list[0])
             observation = [float(data_list[i]) for i in range(1,index + 1)]
             revard = int(data_list[index + 1])
             done = bool(int(data_list[index + 2])) 
             info = {}
+
+            reset = {'unity_data': 'null'}
+            requests.post(unity_data_URL, data=reset)
             
             return observation, revard, done, info
+
         except Exception:
             pass
-
