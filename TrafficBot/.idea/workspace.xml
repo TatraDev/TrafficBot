@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="da70c0c1-fb80-4673-9a7e-2624bee5ce8b" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/../FlaskServer/server.py" beforeDir="false" afterPath="$PROJECT_DIR$/../FlaskServer/server.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebSocketClient/wsclient.py" beforeDir="false" afterPath="$PROJECT_DIR$/WebSocketClient/wsclient.py" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="ProjectId" id="1eE2uhDsmakcmzRPMTTcL9gBKjM" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="da70c0c1-fb80-4673-9a7e-2624bee5ce8b" name="Default Changelist" comment="" />
+      <created>1593872655571</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1593872655571</updated>
+    </task>
+    <servers />
+  </component>
+</project>

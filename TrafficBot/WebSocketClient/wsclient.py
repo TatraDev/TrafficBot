@@ -22,9 +22,6 @@ def receive():
             revard = int(data_list[index + 1])
             done = bool(int(data_list[index + 2])) 
             info = {}
-
-            reset = {'unity_data': 'null'}
-            requests.post(unity_data_URL, data=reset)
             
             return observation, revard, done, info
 

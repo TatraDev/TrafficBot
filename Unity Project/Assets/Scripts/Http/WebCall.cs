@@ -38,6 +38,8 @@ public class WebCall : MonoBehaviour
             {
                 unityDataText.text = www.downloadHandler.text;
             }
+
+            yield return null;
         }
     }
 
@@ -58,8 +60,6 @@ public class WebCall : MonoBehaviour
     {
         while (true)
         {
-            yield return null;
-
             UnityWebRequest www = UnityWebRequest.Get(botURL);
 
             yield return www.SendWebRequest();

@@ -33,7 +33,7 @@ public class GameInterface : MonoBehaviour
 
     private void BonusesInfo()
     {
-        bonusesLable.text = $"{gameManager.bonuses} x{gameManager.bonusFactor}";
+        bonusesLable.text = $"{gameManager.bonuses}";
     }
 
     private void Update()
